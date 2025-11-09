@@ -45,9 +45,9 @@ The player isn’t hidden or neutral. It’s part of the creative field.
 5. Artist Experience
 
 A musician can build a Playt in minutes:
-	1.	Load files onto an SD card
-	2.	Insert it into a blank cartridge
-	3.	Print and attach a label
+1. Load files onto an SD card
+2. Insert it into a blank cartridge
+3. Print and attach a label
 
 No accounts, uploads, or middle layers.
 A release can happen at a kitchen table or a tour van just as easily as a studio.
