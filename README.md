@@ -51,7 +51,7 @@ No accounts. No servers. No tracking. Just art meeting its audience directly.
 
 ## Start Here
 
-- **Concept Document**: [`CONCEPT.md`](docs/CONCEPT.md)  
+- **Concept Document**: [concept.md](https://github.com/NeilMuss/OpenPlayt/blob/main/docs/concept.md)
 - **Hardware Designs**: coming soon  
 - **Firmware / Tools**: in early development  
 - **Example Playt Structure**: coming soon  
