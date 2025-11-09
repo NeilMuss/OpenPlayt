@@ -1,6 +1,6 @@
 # OpenPlayt Concept Document
 
-1. Purpose
+## 1. Purpose
 
 OpenPlayt is a physical format for digital music and mixed media.
 It gives artists a simple way to release work on a small, durable cartridge and gives listeners a direct, offline experience that doesn’t depend on streaming services or centralized platforms.
@@ -9,7 +9,7 @@ At its core, OpenPlayt is a meeting place between artist and listener that remai
 
 ⸻
 
-2. Why Physical Digital Media
+## 2. Why Physical Digital Media
 
 Streaming made music easy to access, but it flattened the experience.
 OpenPlayt restores a sense of presence. When someone holds a Playt, they’re holding a piece of the artist’s intent: a container with music, images, video, and even interactive elements if the artist chooses to include them.
@@ -18,7 +18,7 @@ This is not nostalgia. It’s a way to make digital work feel grounded again.
 
 ⸻
 
-3. What a Playt Is
+## 3. What a Playt Is
 
 A Playt is a small cartridge containing:
 - A standard SD card with album content
@@ -29,7 +29,7 @@ The design keeps manufacturing simple enough for independent creators to handle 
 
 ⸻
 
-4. The Player
+## 4. The Player
 
 The player completes the interaction. It can be:
 - A DIY build using open schematics
@@ -42,7 +42,7 @@ The player isn’t hidden or neutral. It’s part of the creative field.
 
 ⸻
 
-5. Artist Experience
+## 5. Artist Experience
 
 A musician can build a Playt in minutes:
 1. Load files onto an SD card
@@ -56,7 +56,7 @@ Artists keep full ownership of their work. Every cartridge includes a LICENSE.tx
 
 ⸻
 
-6. Listener Experience
+## 6. Listener Experience
 
 A listener inserts the Playt and steps into what the artist made.
 The device handles audio, images, video, and small interactive pieces built with simple tools (Processing, lightweight engines, or custom scripts).
@@ -68,7 +68,7 @@ This makes each Playt a stable, lasting object.
 
 ⸻
 
-7. Openness
+## 7. Openness
 
 OpenPlayt is built on three forms of openness:
 - Hardware: Licensed under CERN OHL-S so improvements remain shareable.
@@ -79,7 +79,7 @@ The aim is a long-lived ecosystem that welcomes custom players, homemade cartrid
 
 ⸻
 
-8. Vision
+## 8. Vision
 
 OpenPlayt is not trying to compete with streaming.
 It’s carving out a small, sturdy space where music and art feel personal again.
@@ -90,7 +90,7 @@ The technology stays simple. The feeling stays human.
 
 ⸻
 
-9. Roadmap (Early Draft)
+## 9. Roadmap (Early Draft)
 - First release of the cartridge mechanical design
 - Reference PCB for the player
 - Basic firmware for reading Playts and launching content
@@ -100,7 +100,7 @@ The technology stays simple. The feeling stays human.
 
 ⸻
 
-10. How to Contribute
+## 10. How to Contribute
 
 OpenPlayt invites contributions from:
 - Hardware engineers
