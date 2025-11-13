@@ -1,99 +1,46 @@
 # OpenPlayt
 
-A small, open hardware format for digital music and mixed media.  
-Artists create a **Playt** by loading an SD card, placing it in a simple cartridge, and adding their own artwork.  
-Listeners slide it into any compatible player and step into the world the artist put inside.
-
-OpenPlayt is physical, durable, and entirely offline.
+**OpenPlayt** is an open-source standard and player design for physical–digital music releases. It combines collectible, NFC-encoded “Playt” cartridges with open audio formats and optional local storage to give artists and listeners a permanent, tangible way to exchange and archive music.
 
 ---
 
-## What is OpenPlayt?
+## Overview
 
-OpenPlayt is a platform built around three pieces:
+The Playt system reimagines the album as a hybrid physical–digital artifact.  
+Each cartridge contains a readable ID (via NFC or QR) linking to audio data stored either on a decentralized network or on the listener’s local device.  
+When inserted into a Playt-compatible player, the cartridge activates playback and metadata display without the need for accounts, ads, or intermediaries.
 
-### 1. The Playt (Cartridge)
-A tiny physical release that holds:
-- A standard SD card  
-- A spring-protected contact tongue  
-- Album art or notes printed on the face  
+Playts can be:
 
-Simple enough to make at home or on the road.
-
-### 2. The Player
-A device anyone can build or customize.  
-It reads the SD card, plays audio, and can show images, video, or small interactive pieces.
-
-### 3. The Open Standards
-Shared conventions that keep every Playt compatible with every player.  
-Hardware files, firmware, and software tools are all open.
+- **Commercial releases** — linked to permanent decentralized storage (e.g. IPFS/Arweave).
+- **Personal mixtapes** — locally authored cartridges with private, offline playback.
 
 ---
 
-## Why This Exists
+## Goals
 
-Streaming is convenient, but it leaves little room for connection.  
-OpenPlayt gives artists a format they control and listeners something they can hold.  
-No accounts. No servers. No tracking. Just art meeting its audience directly.
-
----
-
-## Features
-
-- Fully open hardware  
-- MIT-licensed software  
-- Artist-chosen content licenses  
-- Works offline  
-- Simple to manufacture  
-- Supports multimedia and interactive pieces  
+- Preserve music ownership in an open, artist-controlled format.  
+- Support both online and fully offline playback.  
+- Encourage collectible and expressive physical design.  
+- Maintain interoperability with standard audio formats (FLAC, WAV, MP3).  
+- Provide simple tools for encoding, authoring, and playback.
 
 ---
 
-## Start Here
+## Components
 
-- **Concept Document**: [concept.md](https://github.com/NeilMuss/OpenPlayt/blob/main/docs/concept.md)
-- **Hardware Designs**: coming soon  
-- **Firmware / Tools**: in early development  
-- **Example Playt Structure**: coming soon  
-
----
-
-## Roadmap (Early Phase)
-
-- Cartridge mechanical prototype  
-- Reference player PCB  
-- Minimal firmware to mount SD and play audio  
-- Sample interactive album  
-- Toolkit for artists (folder templates, label design, content guidelines)
+| Component | Function |
+|------------|-----------|
+| **Playt Cartridge** | Physical token with label art, NFC chip, and optional SD slot. |
+| **OpenPlayt Player** | Reference hardware using a Raspberry Pi and NFC reader. |
+| **.playt Format** | Metadata structure defining album identity, media source, and playback rules. |
+| **Authoring Tools** | Scripts for generating cartridges and managing music archives. |
 
 ---
 
-## How to Contribute
+## Getting Started
 
-Builders, artists, developers, and curious tinkerers are all welcome.  
-Ideas, issues, and pull requests help shape the format as it grows.
-
-A **CONTRIBUTING.md** file will be added soon with guidelines.
-
----
-
-## Licensing
-
-- **Hardware**: CERN OHL-S-2.0  
-- **Software**: MIT  
-- **Content on Playts**: chosen by each artist (Creative Commons, All Rights Reserved, etc.)
-
----
-
-## Status
-
-Early but moving.  
-Expect rough edges, sketches, and experiments as the project takes shape.
-
-<p align="center">
-  <a href="https://the-spells.bandcamp.com/album/the-night-has-eyes" target="_blank">
-    <img src="https://github.com/user-attachments/assets/a567f1ba-313c-4e85-92db-5dbdbda551e0" alt="Playt Cartridge" width="350" style="border-radius:12px; box-shadow:0 0 8px rgba(0,0,0,0.2);">
-  </a>
-  <br>
-  <em>Playt Cartridge</em>
-</p>
+1. Clone this repository.  
+   ```bash
+   git clone https://github.com/NeilMuss/OpenPlayt.git
+   cd OpenPlayt
