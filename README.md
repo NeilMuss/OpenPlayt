@@ -3,7 +3,9 @@
 **OpenPlayt** is an open-source standard and player design for physical–digital music releases. It combines collectible, NFC-encoded “Playt” cartridges with open audio formats and optional local storage to give artists and listeners a permanent, tangible way to exchange and archive music.
 
 ---
-<img width="350" alt="playt-render-002" src="https://github.com/user-attachments/assets/c3ae868f-69ad-4ebd-90ac-b132ef939f62" />
+<a href="https://the-spells.bandcamp.com/album/the-night-has-eyes" target="_blank">
+<img width="350" alt="Render of Playt cartridge with the band the Spells" src="https://github.com/user-attachments/assets/c3ae868f-69ad-4ebd-90ac-b132ef939f62" />
+</a>
 
 ## Overview
 
