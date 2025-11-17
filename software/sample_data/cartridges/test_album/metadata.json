@@ -1,0 +1,54 @@
+{
+  "cid": "test_album",
+  "security_level": "open",
+  "version": "1.0",
+  "album": {
+    "title": "Sample Album",
+    "artist": "Sample Artist",
+    "year": 2023,
+    "genre": "Electronic",
+    "songs": [
+      {
+        "title": "Opening Track",
+        "artist": "Sample Artist",
+        "album": "Sample Album",
+        "duration_secs": 180.5,
+        "file_path": "01_opening_track.mp3",
+        "track_number": 1,
+        "metadata": {
+          "bpm": 128,
+          "key": "A minor"
+        }
+      },
+      {
+        "title": "Midnight Drive",
+        "artist": "Sample Artist",
+        "album": "Sample Album",
+        "duration_secs": 245.0,
+        "file_path": "02_midnight_drive.mp3",
+        "track_number": 2,
+        "metadata": {
+          "bpm": 132,
+          "key": "C major"
+        }
+      },
+      {
+        "title": "Closing Theme",
+        "artist": "Sample Artist",
+        "album": "Sample Album",
+        "duration_secs": 195.75,
+        "file_path": "03_closing_theme.mp3",
+        "track_number": 3,
+        "metadata": {
+          "bpm": 120,
+          "key": "E minor"
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
