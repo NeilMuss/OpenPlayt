@@ -8,8 +8,6 @@ packages = [{include = "playt_player"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-python-vlc = "^3.0.20123"
-pydub = "^0.25.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -18,7 +16,6 @@ pytest-cov = "^4.1.0"
 black = "^23.9.1"
 ruff = "^0.1.0"
 mypy = "^1.6.0"
-types-python-vlc = "^0.1.0"
 
 [tool.poetry.scripts]
 playt = "playt_player.interface.cli.player_cli:main"
@@ -63,13 +60,6 @@ warn_no_return = true
 strict_optional = true
 strict_equality = true
 show_error_codes = true
-
-[[tool.mypy.overrides]]
-module = [
-    "vlc.*",
-    "pydub.*",
-]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

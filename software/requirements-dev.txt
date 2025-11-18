@@ -1,0 +1,13 @@
+# Development dependencies for Playt Player
+-r requirements.txt
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.11.1
+pytest-cov>=4.1.0
+
+# Code quality
+black>=23.9.1
+ruff>=0.1.0
+mypy>=1.6.0
+

@@ -1,8 +1,9 @@
 """Audio playback implementations."""
 
-from .local_file_audio_player import LocalFileAudioPlayer
+from .ffmpeg_audio_player import FFmpegAudioPlayer
 
-__all__ = ["LocalFileAudioPlayer"]
+__all__ = ["FFmpegAudioPlayer"]
+
 
 
 

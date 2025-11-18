@@ -1,6 +1,7 @@
 """Command-line interface for the audio player."""
 
 import sys
+from pathlib import Path
 from typing import Optional
 
 from ...application.commands.next_command import NextCommand
@@ -9,10 +10,10 @@ from ...application.commands.play_command import PlayCommand
 from ...application.commands.prev_command import PrevCommand
 from ...application.commands.stop_command import StopCommand
 from ...application.player_service import PlayerService
-from ...domain.entities.album import Album
 from ...domain.interfaces.audio_player import AudioPlayerInterface
 from ...domain.interfaces.cartridge_reader import CartridgeReaderInterface
-from ...infrastructure.audio.local_file_audio_player import LocalFileAudioPlayer
+from ...infrastructure.audio.ffmpeg_audio_player import FFmpegAudioPlayer
+from ...infrastructure.cartridge.playt_file_cartridge_reader import PlaytFileCartridgeReader
 from ...infrastructure.observers.logging_observer import LoggingObserver
 
 
@@ -40,10 +41,15 @@ class PlayerCLI:
         logging_observer = LoggingObserver()
         self._player_service.attach(logging_observer)
 
-    def run_interactive(self) -> None:
-        """Run the interactive CLI loop."""
+    def run_interactive(self, auto_play: bool = False) -> None:
+        """
+        Run the interactive CLI loop.
+
+        Args:
+            auto_play: If True, automatically start playing after loading an album
+        """
         print("Playt Player - Interactive Mode")
-        print("Commands: play, pause, stop, next, prev, load <cartridge_id>, quit")
+        print("Commands: play, pause, stop, next, prev, load <cartridge_id|file_path>, quit")
         print()
 
         while True:
@@ -78,7 +84,27 @@ class PlayerCLI:
                 print(f"Error: {e}")
 
     def _load_cartridge(self, cartridge_id: str) -> None:
-        """Load an album from a cartridge."""
+        """Load an album from a cartridge or .playt file."""
+        # Check if it looks like a .playt file path (by extension)
+        cartridge_path = Path(cartridge_id)
+        is_playt_file_by_extension = cartridge_path.suffix.lower() == ".playt"
+
+        # If it looks like a .playt file and we don't have a reader, create one
+        # We'll let the reader itself check if the file actually exists
+        if is_playt_file_by_extension and not self._cartridge_reader:
+            from ...infrastructure.cartridge.playt_file_cartridge_reader import (
+                PlaytFileCartridgeReader,
+            )
+
+            self._cartridge_reader = PlaytFileCartridgeReader()
+
+            # Try to resolve the path - handle both absolute and relative paths
+            if not cartridge_path.is_absolute():
+                # Try resolving relative to current working directory
+                resolved_path = Path.cwd() / cartridge_path
+                if resolved_path.exists():
+                    cartridge_id = str(resolved_path.absolute())
+
         if not self._cartridge_reader:
             print("Cartridge reader not available")
             return
@@ -99,6 +125,9 @@ class PlayerCLI:
 
         self._player_service.load_album(album)
         print(f"Loaded album: {album.title} by {album.artist}")
+        print(f"  {len(album.songs)} songs loaded")
+        for idx, song in enumerate(album.ordered_songs(), start=1):
+            print(f"  {idx}. {song.title}")
 
     def _show_status(self) -> None:
         """Show current player status."""
@@ -120,7 +149,7 @@ class PlayerCLI:
         print("  stop          - Stop playback")
         print("  next          - Skip to next track")
         print("  prev          - Go to previous track")
-        print("  load <id>     - Load album from cartridge")
+        print("  load <path>   - Load album from cartridge or .playt file")
         print("  status        - Show current status")
         print("  help          - Show this help")
         print("  quit / q      - Exit the player")
@@ -137,16 +166,61 @@ def create_player_service(audio_player: Optional[AudioPlayerInterface] = None) -
         Configured PlayerService instance
     """
     if audio_player is None:
-        audio_player = LocalFileAudioPlayer()
+        audio_player = FFmpegAudioPlayer()
     return PlayerService(audio_player)
 
 
 def main() -> None:
     """Main entry point for the CLI."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Playt Player - Audio player for .playt cartridge files"
+    )
+    parser.add_argument(
+        "playt_file",
+        nargs="?",
+        help="Path to a .playt file to load and play",
+    )
+    parser.add_argument(
+        "--auto-play",
+        action="store_true",
+        help="Automatically start playing after loading the album",
+    )
+
+    args = parser.parse_args()
+
     try:
         player_service = create_player_service()
-        cli = PlayerCLI(player_service)
-        cli.run_interactive()
+
+        # If a .playt file is provided, use PlaytFileCartridgeReader
+        cartridge_reader: Optional[CartridgeReaderInterface] = None
+        if args.playt_file:
+            playt_path = Path(args.playt_file)
+            if not playt_path.exists():
+                print(f"Error: File not found: {args.playt_file}", file=sys.stderr)
+                sys.exit(1)
+
+            if playt_path.suffix.lower() != ".playt":
+                print(
+                    f"Error: File does not have .playt extension: {args.playt_file}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+            cartridge_reader = PlaytFileCartridgeReader()
+
+        cli = PlayerCLI(player_service, cartridge_reader)
+
+        # If a .playt file was provided, load it automatically
+        if args.playt_file and cartridge_reader:
+            print(f"Loading .playt file: {args.playt_file}")
+            cli._load_cartridge(str(playt_path.absolute()))
+            if args.auto_play:
+                print("Starting playback...")
+                PlayCommand(player_service).execute()
+
+        cli.run_interactive(auto_play=args.auto_play)
     except Exception as e:
         print(f"Failed to start player: {e}", file=sys.stderr)
         sys.exit(1)
@@ -154,6 +228,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 

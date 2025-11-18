@@ -42,9 +42,32 @@ tests/
 ### Prerequisites
 
 - Python 3.11 or higher
-- Poetry (for dependency management)
+- FFmpeg (specifically `ffplay` for audio playback)
+  - macOS: `brew install ffmpeg`
+  - Linux: `sudo apt-get install ffmpeg` (Ubuntu/Debian) or use your distribution's package manager
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add `ffplay.exe` to your PATH
 
-### Setup
+### Setup with pip (recommended if Poetry is not installed)
+
+1. Create a virtual environment (recommended):
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On macOS/Linux
+   # OR
+   venv\Scripts\activate  # On Windows
+   ```
+
+2. Navigate to the software directory:
+   ```bash
+   cd software
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Setup with Poetry (alternative)
 
 1. Install Poetry if you haven't already:
    ```bash
@@ -70,14 +93,31 @@ tests/
 
 ### Running the Player
 
-Start the interactive CLI:
+#### Load and play a .playt file:
 ```bash
-poetry run playt
+python -m playt_player.interface.cli.player_cli /path/to/album.playt
 ```
 
-Or use Python directly:
+#### Load and auto-play:
 ```bash
-poetry run python -m playt_player.interface.cli.player_cli
+python -m playt_player.interface.cli.player_cli /path/to/album.playt --auto-play
+```
+
+#### Start interactive CLI (then load a .playt file):
+```bash
+python -m playt_player.interface.cli.player_cli
+```
+
+#### Example: play the provided cartridge
+```bash
+python -m playt_player.interface.cli.player_cli "/Users/neilmussett/Downloads/TheSpells-TheNightHasEyes.playt"
+```
+
+**Note:** If using Poetry, you can use `poetry run` prefix:
+```bash
+poetry run playt /path/to/album.playt
+# OR
+poetry run python -m playt_player.interface.cli.player_cli /path/to/album.playt
 ```
 
 ### CLI Commands
@@ -87,14 +127,31 @@ poetry run python -m playt_player.interface.cli.player_cli
 - `stop` - Stop playback
 - `next` - Skip to next track
 - `prev` - Go to previous track
-- `load <cartridge_id>` - Load album from cartridge
+- `load <path>` - Load album from cartridge or .playt file (e.g., `load /path/to/album.playt`)
 - `status` - Show current status
 - `help` - Show help message
 - `quit` / `q` - Exit the player
 
-### Loading a Cartridge
+### Loading a .playt File
 
-Cartridges are directories containing:
+You can load `.playt` files (zip archives containing audio files):
+
+```bash
+python -m playt_player.interface.cli.player_cli album.playt
+```
+
+The `.playt` file should be a zip archive with audio files in the top-level folder. Supported audio formats:
+- MP3 (`.mp3`)
+- FLAC (`.flac`)
+- WAV (`.wav`)
+- M4A (`.m4a`)
+- AAC (`.aac`)
+- OGG (`.ogg`)
+- Opus (`.opus`)
+
+### Loading a Cartridge (Alternative Format)
+
+Cartridges can also be directories containing:
 - `metadata.json` - Cartridge and album metadata
 - Audio files referenced in the metadata
 
@@ -116,43 +173,76 @@ See `sample_data/cartridges/test_album/metadata.json` for an example metadata fi
 
 Run all tests:
 ```bash
+# With pip:
+pytest
+
+# With Poetry:
 poetry run pytest
 ```
 
 Run with coverage report:
 ```bash
+# With pip:
+pytest --cov=playt_player --cov-report=html
+
+# With Poetry:
 poetry run pytest --cov=playt_player --cov-report=html
 ```
 
 Run specific test file:
 ```bash
+# With pip:
+pytest tests/unit/test_song.py
+
+# With Poetry:
 poetry run pytest tests/unit/test_song.py
 ```
 
 ### Code Quality
 
+Install development dependencies first:
+```bash
+# With pip:
+pip install -r requirements-dev.txt
+
+# With Poetry:
+poetry install
+```
+
 Format code with Black:
 ```bash
+# With pip:
+black playt_player tests
+
+# With Poetry:
 poetry run black playt_player tests
 ```
 
 Lint with Ruff:
 ```bash
+# With pip:
+ruff check playt_player tests
+
+# With Poetry:
 poetry run ruff check playt_player tests
 ```
 
 Type check with mypy:
 ```bash
+# With pip:
+mypy playt_player
+
+# With Poetry:
 poetry run mypy playt_player
 ```
 
 ### Pre-commit Checks
 
 Before committing, ensure:
-1. All tests pass: `poetry run pytest`
-2. Code is formatted: `poetry run black .`
-3. No linting errors: `poetry run ruff check .`
-4. Type checking passes: `poetry run mypy playt_player`
+1. All tests pass: `pytest` (or `poetry run pytest`)
+2. Code is formatted: `black .` (or `poetry run black .`)
+3. No linting errors: `ruff check .` (or `poetry run ruff check .`)
+4. Type checking passes: `mypy playt_player` (or `poetry run mypy playt_player`)
 
 ## Architecture
 
@@ -213,6 +303,7 @@ See LICENSE files in the project root.
 ## Support
 
 For issues, questions, or contributions, please refer to the project documentation or create an issue in the repository.
+
 
 
 
