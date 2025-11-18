@@ -58,7 +58,7 @@ player_service.play()  # Both observers notified
 
 ### Implementation
 - `AudioPlayerInterface` in `domain/interfaces/audio_player.py`
-- `LocalFileAudioPlayer` implements interface using VLC
+- `FFmpegAudioPlayer` implements interface using FFmpeg
 - Future: `HardwareAudioPlayer`, `NetworkAudioPlayer`
 
 ### Rationale
@@ -69,7 +69,7 @@ player_service.play()  # Both observers notified
 ### Example
 ```python
 # Can swap implementations without changing application code
-audio_player = LocalFileAudioPlayer()  # or HardwareAudioPlayer()
+audio_player = FFmpegAudioPlayer()  # or HardwareAudioPlayer()
 player_service = PlayerService(audio_player)
 ```
 

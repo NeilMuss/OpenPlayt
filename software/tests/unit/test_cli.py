@@ -69,9 +69,10 @@ class TestPlayerCLI:
         """Test loading a cartridge when no cartridge reader is provided."""
         cli = PlayerCLI(player_service, None)
 
-        with patch("builtins.print") as mock_print:
+        # Mock the logger's error method
+        with patch.object(cli._logger, "error") as mock_error:
             cli._load_cartridge("test_cartridge")
-            mock_print.assert_called_once_with("Cartridge reader not available")
+            mock_error.assert_called_once_with("Cartridge reader not available")
 
     def test_load_playt_file_creates_reader(
         self, player_service: PlayerService, tmp_path: Path
@@ -132,9 +133,9 @@ class TestPlayerCLI:
 
         cli = PlayerCLI(player_service, mock_reader)
 
-        with patch("builtins.print") as mock_print:
+        with patch.object(cli._logger, "error") as mock_error:
             cli._load_cartridge("nonexistent_cartridge")
-            mock_print.assert_called_once_with(
+            mock_error.assert_called_once_with(
                 "Cartridge not found: nonexistent_cartridge"
             )
 
@@ -148,9 +149,9 @@ class TestPlayerCLI:
 
         cli = PlayerCLI(player_service, mock_reader)
 
-        with patch("builtins.print") as mock_print:
+        with patch.object(cli._logger, "error") as mock_error:
             cli._load_cartridge("test_cartridge")
-            mock_print.assert_called_once_with(
+            mock_error.assert_called_once_with(
                 "Failed to read cartridge: test_cartridge"
             )
 
@@ -166,9 +167,9 @@ class TestPlayerCLI:
 
         cli = PlayerCLI(player_service, mock_reader)
 
-        with patch("builtins.print") as mock_print:
+        with patch.object(cli._logger, "error") as mock_error:
             cli._load_cartridge("test_cartridge")
-            mock_print.assert_called_once_with(
+            mock_error.assert_called_once_with(
                 "Failed to load album from cartridge: test_cartridge"
             )
 
@@ -186,21 +187,21 @@ class TestPlayerCLI:
         player_service.play()
 
         cli = PlayerCLI(player_service)
-        with patch("builtins.print") as mock_print:
+        with patch.object(cli._logger, "info") as mock_info:
             cli._show_status()
-            # Should print status information
-            assert mock_print.called
-            call_args = str(mock_print.call_args)
+            # Should log status information
+            assert mock_info.called
+            call_args = str(mock_info.call_args)
             assert "State:" in call_args or "Song:" in call_args
 
     def test_show_status_without_song(self, player_service: PlayerService) -> None:
         """Test showing status when no song is loaded."""
         cli = PlayerCLI(player_service)
-        with patch("builtins.print") as mock_print:
+        with patch.object(cli._logger, "info") as mock_info:
             cli._show_status()
-            # Should print status information
-            assert mock_print.called
-            call_args = str(mock_print.call_args)
+            # Should log status information
+            assert mock_info.called
+            call_args = str(mock_info.call_args)
             assert "State:" in call_args or "No song loaded" in call_args
 
     def test_load_playt_file_with_relative_path(

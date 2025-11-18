@@ -273,7 +273,7 @@ State changes are broadcast to registered observers, enabling:
 
 ### Strategy/Adapter Pattern
 Audio playback backends are abstracted through interfaces, allowing:
-- Easy swapping of audio engines (VLC, ffmpeg, pydub)
+- Easy swapping of audio engines (ffmpeg, pydub)
 - Testing with mock implementations
 - Future hardware-specific implementations
 

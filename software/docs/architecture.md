@@ -53,7 +53,7 @@ Command pattern implementations:
 Concrete implementations of domain interfaces and external integrations.
 
 #### Audio (`infrastructure/audio/`)
-- **LocalFileAudioPlayer**: VLC-based audio playback implementation
+- **FFmpegAudioPlayer**: FFmpeg-based audio playback implementation
 
 #### Cartridge (`infrastructure/cartridge/`)
 - **LocalFileCartridgeReader**: Filesystem-based cartridge reader

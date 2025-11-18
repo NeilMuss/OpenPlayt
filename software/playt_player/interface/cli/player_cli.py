@@ -14,6 +14,10 @@ from ...domain.interfaces.audio_player import AudioPlayerInterface
 from ...domain.interfaces.cartridge_reader import CartridgeReaderInterface
 from ...infrastructure.audio.ffmpeg_audio_player import FFmpegAudioPlayer
 from ...infrastructure.cartridge.playt_file_cartridge_reader import PlaytFileCartridgeReader
+from ...infrastructure.logging.cli_logger import (
+    CLIOutputObserver,
+    get_cli_logger,
+)
 from ...infrastructure.observers.logging_observer import LoggingObserver
 
 
@@ -34,12 +38,21 @@ class PlayerCLI:
         """
         self._player_service = player_service
         self._cartridge_reader = cartridge_reader
+        self._logger = get_cli_logger()
         self._setup_observers()
+        self._setup_logger_observers()
 
     def _setup_observers(self) -> None:
         """Set up default observers."""
         logging_observer = LoggingObserver()
         self._player_service.attach(logging_observer)
+
+    def _setup_logger_observers(self) -> None:
+        """Set up stdout/stderr as observers for the logger."""
+        # Only attach if not already attached (prevents duplicates)
+        if not self._logger.has_observers():
+            stdout_observer = CLIOutputObserver(sys.stdout, sys.stderr)
+            self._logger.attach(stdout_observer)
 
     def run_interactive(self, auto_play: bool = False) -> None:
         """
@@ -48,9 +61,9 @@ class PlayerCLI:
         Args:
             auto_play: If True, automatically start playing after loading an album
         """
-        print("Playt Player - Interactive Mode")
-        print("Commands: play, pause, stop, next, prev, load <cartridge_id|file_path>, quit")
-        print()
+        self._logger.info("Playt Player - Interactive Mode")
+        self._logger.info("Commands: play, pause, stop, next, prev, load <cartridge_id|file_path>, quit")
+        self._logger.info("")
 
         while True:
             try:
@@ -76,12 +89,12 @@ class PlayerCLI:
                 elif command == "help":
                     self._show_help()
                 else:
-                    print(f"Unknown command: {command}. Type 'help' for commands.")
+                    self._logger.warning(f"Unknown command: {command}. Type 'help' for commands.")
             except KeyboardInterrupt:
-                print("\nExiting...")
+                self._logger.info("\nExiting...")
                 break
             except Exception as e:
-                print(f"Error: {e}")
+                self._logger.error(f"Error: {e}")
 
     def _load_cartridge(self, cartridge_id: str) -> None:
         """Load an album from a cartridge or .playt file."""
@@ -106,28 +119,28 @@ class PlayerCLI:
                     cartridge_id = str(resolved_path.absolute())
 
         if not self._cartridge_reader:
-            print("Cartridge reader not available")
+            self._logger.error("Cartridge reader not available")
             return
 
         if not self._cartridge_reader.is_cartridge_available(cartridge_id):
-            print(f"Cartridge not found: {cartridge_id}")
+            self._logger.error(f"Cartridge not found: {cartridge_id}")
             return
 
         cartridge = self._cartridge_reader.read_cartridge(cartridge_id)
         if not cartridge:
-            print(f"Failed to read cartridge: {cartridge_id}")
+            self._logger.error(f"Failed to read cartridge: {cartridge_id}")
             return
 
         album = self._cartridge_reader.load_album_from_cartridge(cartridge)
         if not album:
-            print(f"Failed to load album from cartridge: {cartridge_id}")
+            self._logger.error(f"Failed to load album from cartridge: {cartridge_id}")
             return
 
         self._player_service.load_album(album)
-        print(f"Loaded album: {album.title} by {album.artist}")
-        print(f"  {len(album.songs)} songs loaded")
+        self._logger.info(f"Loaded album: {album.title} by {album.artist}")
+        self._logger.info(f"  {len(album.songs)} songs loaded")
         for idx, song in enumerate(album.ordered_songs(), start=1):
-            print(f"  {idx}. {song.title}")
+            self._logger.info(f"  {idx}. {song.title}")
 
     def _show_status(self) -> None:
         """Show current player status."""
@@ -137,22 +150,22 @@ class PlayerCLI:
 
         if song:
             pos_str = f"{position:.1f}s" if position else "?"
-            print(f"State: {state}, Song: {song.title}, Position: {pos_str}")
+            self._logger.info(f"State: {state}, Song: {song.title}, Position: {pos_str}")
         else:
-            print(f"State: {state}, No song loaded")
+            self._logger.info(f"State: {state}, No song loaded")
 
     def _show_help(self) -> None:
         """Show help message."""
-        print("Available commands:")
-        print("  play          - Start or resume playback")
-        print("  pause         - Pause playback")
-        print("  stop          - Stop playback")
-        print("  next          - Skip to next track")
-        print("  prev          - Go to previous track")
-        print("  load <path>   - Load album from cartridge or .playt file")
-        print("  status        - Show current status")
-        print("  help          - Show this help")
-        print("  quit / q      - Exit the player")
+        self._logger.info("Available commands:")
+        self._logger.info("  play          - Start or resume playback")
+        self._logger.info("  pause         - Pause playback")
+        self._logger.info("  stop          - Stop playback")
+        self._logger.info("  next          - Skip to next track")
+        self._logger.info("  prev          - Go to previous track")
+        self._logger.info("  load <path>   - Load album from cartridge or .playt file")
+        self._logger.info("  status        - Show current status")
+        self._logger.info("  help          - Show this help")
+        self._logger.info("  quit / q      - Exit the player")
 
 
 def create_player_service(audio_player: Optional[AudioPlayerInterface] = None) -> PlayerService:
@@ -160,7 +173,7 @@ def create_player_service(audio_player: Optional[AudioPlayerInterface] = None) -
     Factory function to create a player service with default dependencies.
 
     Args:
-        audio_player: Optional audio player (defaults to LocalFileAudioPlayer)
+        audio_player: Optional audio player (defaults to FFmpegAudioPlayer)
 
     Returns:
         Configured PlayerService instance
@@ -193,18 +206,22 @@ def main() -> None:
     try:
         player_service = create_player_service()
 
+        # Set up logger with stdout/stderr observers before any logging
+        logger = get_cli_logger()
+        stdout_observer = CLIOutputObserver(sys.stdout, sys.stderr)
+        logger.attach(stdout_observer)
+
         # If a .playt file is provided, use PlaytFileCartridgeReader
         cartridge_reader: Optional[CartridgeReaderInterface] = None
         if args.playt_file:
             playt_path = Path(args.playt_file)
             if not playt_path.exists():
-                print(f"Error: File not found: {args.playt_file}", file=sys.stderr)
+                logger.error(f"Error: File not found: {args.playt_file}")
                 sys.exit(1)
 
             if playt_path.suffix.lower() != ".playt":
-                print(
-                    f"Error: File does not have .playt extension: {args.playt_file}",
-                    file=sys.stderr,
+                logger.error(
+                    f"Error: File does not have .playt extension: {args.playt_file}"
                 )
                 sys.exit(1)
 
@@ -214,15 +231,19 @@ def main() -> None:
 
         # If a .playt file was provided, load it automatically
         if args.playt_file and cartridge_reader:
-            print(f"Loading .playt file: {args.playt_file}")
+            logger.info(f"Loading .playt file: {args.playt_file}")
             cli._load_cartridge(str(playt_path.absolute()))
             if args.auto_play:
-                print("Starting playback...")
+                logger.info("Starting playback...")
                 PlayCommand(player_service).execute()
 
         cli.run_interactive(auto_play=args.auto_play)
     except Exception as e:
-        print(f"Failed to start player: {e}", file=sys.stderr)
+        logger = get_cli_logger()
+        if not logger.has_observers():  # If no observers yet, set up quickly
+            stdout_observer = CLIOutputObserver(sys.stdout, sys.stderr)
+            logger.attach(stdout_observer)
+        logger.error(f"Failed to start player: {e}")
         sys.exit(1)
 
 

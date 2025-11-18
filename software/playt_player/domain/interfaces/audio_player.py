@@ -8,7 +8,7 @@ class AudioPlayerInterface(ABC):
     """
     Abstract interface for audio playback.
 
-    This interface allows different audio backends (VLC, ffmpeg, pydub, etc.)
+    This interface allows different audio backends (ffmpeg, pydub, etc.)
     to be swapped without changing the application layer.
     """
 

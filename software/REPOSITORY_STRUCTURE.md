@@ -48,7 +48,7 @@ software/
 │   │   ├── __init__.py
 │   │   ├── audio/           # Audio implementations
 │   │   │   ├── __init__.py
-│   │   │   └── local_file_audio_player.py  # VLC-based player
+│   │   │   └── ffmpeg_audio_player.py  # FFmpeg-based player
 │   │   ├── cartridge/       # Cartridge implementations
 │   │   │   ├── __init__.py
 │   │   │   └── local_file_cartridge_reader.py

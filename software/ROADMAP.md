@@ -8,7 +8,7 @@
 - [x] Interface definitions
 - [x] Command pattern implementation
 - [x] Observer pattern implementation
-- [x] Basic audio player (VLC backend)
+- [x] Basic audio player (FFmpeg backend)
 - [x] CLI interface
 - [x] Unit and integration tests
 - [x] Code quality tools (black, ruff, mypy)

@@ -11,7 +11,7 @@ def check_imports() -> bool:
         from playt_player.domain.interfaces import AudioPlayerInterface, Observer, Subject
         from playt_player.application.commands import PlayCommand, PauseCommand
         from playt_player.application.player_service import PlayerService
-        from playt_player.infrastructure.audio import LocalFileAudioPlayer
+        from playt_player.infrastructure.audio import FFmpegAudioPlayer
         from playt_player.infrastructure.cartridge import LocalFileCartridgeReader
         from playt_player.infrastructure.observers import LoggingObserver, LEDObserver
         print("✓ All imports successful")
