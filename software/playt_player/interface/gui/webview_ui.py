@@ -172,7 +172,8 @@ class WebViewUI(Observer):
                     "title": data.title,
                     "artist": data.artist,
                     "album": data.album,
-                    "duration": data.duration_secs or 0
+                    "duration": data.duration_secs or 0,
+                    "coverArt": data.cover_art_path
                 }
                 self._window.evaluate_js(f"window.playt._emitTrackChange({json.dumps(song_data)})")
                 self._window.evaluate_js("window.playt._emitPlaybackState('playing')")
@@ -193,7 +194,8 @@ class WebViewUI(Observer):
                         "title": song.title,
                         "artist": song.artist,
                         "album": song.album,
-                        "duration": song.duration_secs or 0
+                        "duration": song.duration_secs or 0,
+                        "coverArt": song.cover_art_path
                     }
                     # Ensure unicode characters are preserved by disabling ascii escaping
                     json_str = json.dumps(song_data, ensure_ascii=False)
@@ -285,7 +287,8 @@ class WebViewUI(Observer):
                 "title": current_song.title,
                 "artist": current_song.artist,
                 "album": current_song.album,
-                "duration": current_song.duration_secs or 0
+                "duration": current_song.duration_secs or 0,
+                "coverArt": current_song.cover_art_path
             }
             # Ensure unicode characters are preserved by disabling ascii escaping
             json_str = json.dumps(song_data, ensure_ascii=False)

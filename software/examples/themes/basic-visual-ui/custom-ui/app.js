@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnNext = document.getElementById('btn-next');
     const btnLoad = document.getElementById('btn-load');
     const elVolume = document.getElementById('volume-slider');
+    const elAlbumArt = document.getElementById('album-art');
+    const elArtworkPlaceholder = document.getElementById('artwork-placeholder');
 
     // State
     let isDragging = false;
@@ -52,6 +54,16 @@ document.addEventListener('DOMContentLoaded', () => {
         elProgressBar.max = duration;
         elProgressBar.disabled = false;
         
+        // Update cover art
+        if (track.coverArt) {
+            elAlbumArt.src = track.coverArt;
+            elAlbumArt.style.display = 'block';
+            elArtworkPlaceholder.style.display = 'none';
+        } else {
+            elAlbumArt.style.display = 'none';
+            elArtworkPlaceholder.style.display = 'flex';
+        }
+
         if (!isDragging) {
             elProgressBar.value = 0;
             elCurrentTime.textContent = "0:00";

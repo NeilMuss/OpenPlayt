@@ -26,6 +26,8 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
 
     # Supported audio file extensions
     AUDIO_EXTENSIONS = {".mp3", ".flac", ".wav", ".m4a", ".aac", ".ogg", ".opus"}
+    # Supported image file extensions
+    IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 
     def __init__(self) -> None:
         """Initialize the playt file cartridge reader."""
@@ -116,6 +118,33 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
         else:
             return self._clean_title(filename), "Unknown Artist", default_album
 
+    def _find_cover_art(self, directory: Path) -> Optional[str]:
+        """
+        Find cover art image in the directory.
+        
+        Prioritizes files named 'cover', 'folder', 'front', 'album'.
+        """
+        if not directory.is_dir():
+            return None
+            
+        images = []
+        for item in directory.iterdir():
+            if item.is_file() and item.suffix.lower() in self.IMAGE_EXTENSIONS:
+                images.append(item)
+                
+        if not images:
+            return None
+            
+        # Priority search
+        priority_names = ["cover", "folder", "front", "album"]
+        for name in priority_names:
+            for img in images:
+                if img.stem.lower() == name:
+                    return str(img)
+                    
+        # Fallback to first image found
+        return str(images[0])
+
     def load_album_from_cartridge(self, cartridge: Cartridge) -> Optional[Album]:
         """
         Load album data from a .playt file.
@@ -148,6 +177,7 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
             # Check if there's a single subdirectory (common zip pattern)
             top_level_dir = Path(temp_dir)
             audio_files = self._find_audio_files(top_level_dir)
+            content_dir = top_level_dir
 
             # If no files found at root, look through subdirectories
             if not audio_files:
@@ -159,12 +189,16 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                     candidate_files = self._find_audio_files(subdir)
                     if candidate_files:
                         audio_files = candidate_files
+                        content_dir = subdir
                         break
 
             if not audio_files:
                 # Clean up temp directory if no audio files found
                 shutil.rmtree(temp_dir)
                 return None
+
+            # Find cover art in the same directory as content
+            cover_art_path = self._find_cover_art(content_dir)
 
             # Create songs from audio files
             songs: list[Song] = []
@@ -193,6 +227,7 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                     duration_secs=self._get_duration(audio_file),
                     file_path=str(audio_file),
                     track_number=idx,
+                    cover_art_path=cover_art_path,
                     metadata={},
                 )
                 songs.append(song)
@@ -214,6 +249,7 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                 artist=album_artist,
                 year=None,
                 genre=None,
+                cover_art_path=cover_art_path,
                 songs=songs,
             )
 

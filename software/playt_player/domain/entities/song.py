@@ -25,6 +25,7 @@ class Song:
     duration_secs: Optional[float]
     file_path: str
     track_number: Optional[int] = None
+    cover_art_path: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

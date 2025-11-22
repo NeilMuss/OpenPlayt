@@ -23,7 +23,7 @@ playt_player/
 │   ├── entities/        # Domain models (Song, Album, Library)
 │   └── interfaces/      # Abstract interfaces (AudioPlayer, Observer, etc.)
 ├── application/         # Use cases and orchestration
-│   ├── commands/        # Command pattern implementations
+│   ├── commands/        # Command pattern implementation
 │   └── player_service.py
 ├── infrastructure/      # External integrations
 │   ├── audio/           # Audio player implementations

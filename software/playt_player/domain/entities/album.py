@@ -23,6 +23,7 @@ class Album:
     artist: str
     year: Optional[int] = None
     genre: Optional[str] = None
+    cover_art_path: Optional[str] = None
     songs: list[Song] = field(default_factory=list)
 
     def __repr__(self) -> str:
