@@ -118,14 +118,15 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
         else:
             return self._clean_title(filename), "Unknown Artist", default_album
 
-    def _find_cover_art(self, directory: Path) -> Optional[str]:
+    def _find_cover_art(self, directory: Path) -> tuple[Optional[str], list[str]]:
         """
-        Find cover art image in the directory.
+        Find cover art and slideshow images in the directory.
         
-        Prioritizes files named 'cover', 'folder', 'front', 'album'.
+        Returns:
+            Tuple of (cover_art_path, slideshow_image_paths)
         """
         if not directory.is_dir():
-            return None
+            return None, []
             
         images = []
         for item in directory.iterdir():
@@ -133,17 +134,41 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                 images.append(item)
                 
         if not images:
-            return None
+            return None, []
             
-        # Priority search
+        cover_art_path = None
+        
+        # Priority search for cover art
         priority_names = ["cover", "folder", "front", "album"]
         for name in priority_names:
             for img in images:
                 if img.stem.lower() == name:
-                    return str(img)
+                    cover_art_path = str(img)
+                    break
+            if cover_art_path:
+                break
                     
-        # Fallback to first image found
-        return str(images[0])
+        # Fallback to first image found if no priority match
+        if not cover_art_path and images:
+            cover_art_path = str(images[0])
+            
+        # Filter slideshow images
+        slideshow_images = []
+        excluded_terms = ["cover"] # User said "not named anything like 'cover'"
+        
+        for img in images:
+            img_path = str(img)
+            # Skip the selected cover art
+            if img_path == cover_art_path:
+                continue
+                
+            # Skip files containing 'cover' in the name (case insensitive)
+            if "cover" in img.stem.lower():
+                continue
+                
+            slideshow_images.append(img_path)
+            
+        return cover_art_path, sorted(slideshow_images)
 
     def load_album_from_cartridge(self, cartridge: Cartridge) -> Optional[Album]:
         """
@@ -197,8 +222,8 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                 shutil.rmtree(temp_dir)
                 return None
 
-            # Find cover art in the same directory as content
-            cover_art_path = self._find_cover_art(content_dir)
+            # Find cover art and slideshow images in the same directory as content
+            cover_art_path, slideshow_images = self._find_cover_art(content_dir)
 
             # Create songs from audio files
             songs: list[Song] = []
@@ -228,6 +253,7 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                     file_path=str(audio_file),
                     track_number=idx,
                     cover_art_path=cover_art_path,
+                    slideshow_images=slideshow_images,
                     metadata={},
                 )
                 songs.append(song)
@@ -250,6 +276,7 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
                 year=None,
                 genre=None,
                 cover_art_path=cover_art_path,
+                slideshow_images=slideshow_images,
                 songs=songs,
             )
 

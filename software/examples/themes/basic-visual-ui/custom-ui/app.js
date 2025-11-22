@@ -14,11 +14,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const elVolume = document.getElementById('volume-slider');
     const elAlbumArt = document.getElementById('album-art');
     const elArtworkPlaceholder = document.getElementById('artwork-placeholder');
+    const cbSlideshow = document.getElementById('cb-slideshow');
 
     // State
     let isDragging = false;
     let duration = 0;
     let isPlaying = false;
+    let slideshowInterval = null;
+    let slideshowImages = [];
+    let currentImageIndex = 0;
+    let currentCoverArt = null;
+    let isSlideshowEnabled = true;
 
     // Wait for Python bridge
     function waitForBridge() {
@@ -54,14 +60,25 @@ document.addEventListener('DOMContentLoaded', () => {
         elProgressBar.max = duration;
         elProgressBar.disabled = false;
         
-        // Update cover art
-        if (track.coverArt) {
-            elAlbumArt.src = track.coverArt;
+        // Update cover art and slideshow
+        currentCoverArt = track.coverArt || null;
+        slideshowImages = track.slideshowImages || [];
+        
+        // Stop any existing slideshow
+        stopSlideshow();
+        
+        if (currentCoverArt) {
+            elAlbumArt.src = currentCoverArt;
             elAlbumArt.style.display = 'block';
             elArtworkPlaceholder.style.display = 'none';
         } else {
             elAlbumArt.style.display = 'none';
             elArtworkPlaceholder.style.display = 'flex';
+        }
+        
+        // Start slideshow if playing and we have images
+        if (isPlaying && slideshowImages.length > 0 && isSlideshowEnabled) {
+            startSlideshow();
         }
 
         if (!isDragging) {
@@ -73,6 +90,47 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePlaybackState(state) {
         isPlaying = (state === 'playing');
         updatePlayButton();
+        
+        if (isPlaying) {
+            if (slideshowImages.length > 0 && isSlideshowEnabled) {
+                startSlideshow();
+            }
+        } else {
+            stopSlideshow();
+            // Reset to cover art when paused/stopped
+            if (currentCoverArt) {
+                 elAlbumArt.src = currentCoverArt;
+            }
+        }
+    }
+
+    function startSlideshow() {
+        stopSlideshow(); // Ensure no duplicates
+        
+        // Start with the first image (or continue from where we left off? 
+        // Let's start from index 0 or a random one. Let's try sequential for now.)
+        // Actually, let's show the cover art first, then cycle?
+        // Or just start cycling.
+        
+        // If we have images, cycle them every 15 seconds
+        slideshowInterval = setInterval(() => {
+             if (slideshowImages.length === 0) return;
+             
+             // Next image
+             currentImageIndex = (currentImageIndex + 1) % slideshowImages.length;
+             const nextImage = slideshowImages[currentImageIndex];
+             
+             // Create a fade effect maybe? For now just swap source
+             elAlbumArt.src = nextImage;
+             
+        }, 15000); // 15 seconds
+    }
+
+    function stopSlideshow() {
+        if (slideshowInterval) {
+            clearInterval(slideshowInterval);
+            slideshowInterval = null;
+        }
     }
 
     function handleProgress(time) {
@@ -122,6 +180,23 @@ document.addEventListener('DOMContentLoaded', () => {
     elVolume.addEventListener('change', () => {
         window.playt.setVolume(parseFloat(elVolume.value));
     });
+
+    // Slideshow toggle
+    if (cbSlideshow) {
+        cbSlideshow.addEventListener('change', () => {
+            isSlideshowEnabled = cbSlideshow.checked;
+            if (isSlideshowEnabled) {
+                if (isPlaying && slideshowImages.length > 0) {
+                    startSlideshow();
+                }
+            } else {
+                stopSlideshow();
+                if (currentCoverArt) {
+                    elAlbumArt.src = currentCoverArt;
+                }
+            }
+        });
+    }
 
     // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {

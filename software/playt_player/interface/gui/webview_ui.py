@@ -173,7 +173,8 @@ class WebViewUI(Observer):
                     "artist": data.artist,
                     "album": data.album,
                     "duration": data.duration_secs or 0,
-                    "coverArt": data.cover_art_path
+                    "coverArt": data.cover_art_path,
+                    "slideshowImages": data.slideshow_images
                 }
                 self._window.evaluate_js(f"window.playt._emitTrackChange({json.dumps(song_data)})")
                 self._window.evaluate_js("window.playt._emitPlaybackState('playing')")
@@ -195,7 +196,8 @@ class WebViewUI(Observer):
                         "artist": song.artist,
                         "album": song.album,
                         "duration": song.duration_secs or 0,
-                        "coverArt": song.cover_art_path
+                        "coverArt": song.cover_art_path,
+                        "slideshowImages": song.slideshow_images
                     }
                     # Ensure unicode characters are preserved by disabling ascii escaping
                     json_str = json.dumps(song_data, ensure_ascii=False)
@@ -288,7 +290,8 @@ class WebViewUI(Observer):
                 "artist": current_song.artist,
                 "album": current_song.album,
                 "duration": current_song.duration_secs or 0,
-                "coverArt": current_song.cover_art_path
+                "coverArt": current_song.cover_art_path,
+                "slideshowImages": current_song.slideshow_images
             }
             # Ensure unicode characters are preserved by disabling ascii escaping
             json_str = json.dumps(song_data, ensure_ascii=False)
@@ -301,6 +304,9 @@ class WebViewUI(Observer):
         """Poll for playback progress."""
         import time
         while self._running:
+            # Check if track finished and auto-advance
+            self._player_service.check_playback_status()
+            
             if self._window and self._player_service.get_state() == "playing":
                 pos = self._player_service.get_position()
                 if pos is not None:

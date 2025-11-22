@@ -24,6 +24,7 @@ class Album:
     year: Optional[int] = None
     genre: Optional[str] = None
     cover_art_path: Optional[str] = None
+    slideshow_images: list[str] = field(default_factory=list)
     songs: list[Song] = field(default_factory=list)
 
     def __repr__(self) -> str:

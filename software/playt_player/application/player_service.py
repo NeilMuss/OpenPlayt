@@ -163,3 +163,19 @@ class PlayerService(Subject):
         """
         self._audio_player.set_volume(volume)
         self.notify("volume_changed", volume)
+
+    def check_playback_status(self) -> None:
+        """
+        Check the status of playback and advance if necessary.
+        
+        This method should be called periodically by the main loop.
+        If the audio player reports 'idle' but we have a current song,
+        it means the track finished naturally.
+        """
+        state = self._audio_player.get_state()
+        
+        # If we think we are playing (current_song is set) but player is idle,
+        # then the track finished.
+        if self._current_song is not None and state == "idle":
+            # Advance to next track
+            self.next()

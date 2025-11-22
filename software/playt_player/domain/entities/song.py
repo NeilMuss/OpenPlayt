@@ -26,6 +26,7 @@ class Song:
     file_path: str
     track_number: Optional[int] = None
     cover_art_path: Optional[str] = None
+    slideshow_images: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
