@@ -82,4 +82,14 @@ class AudioPlayerInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def set_volume(self, volume: float) -> None:
+        """
+        Set the playback volume.
+
+        Args:
+            volume: Volume level from 0.0 to 1.0
+        """
+        pass
+
 

@@ -153,3 +153,13 @@ class PlayerService(Subject):
             Position in seconds or None
         """
         return self._audio_player.get_position()
+
+    def set_volume(self, volume: float) -> None:
+        """
+        Set the playback volume.
+
+        Args:
+            volume: Volume level from 0.0 to 1.0
+        """
+        self._audio_player.set_volume(volume)
+        self.notify("volume_changed", volume)

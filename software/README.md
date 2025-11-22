@@ -110,7 +110,7 @@ python -m playt_player.interface.cli.player_cli
 
 #### Example: play the provided cartridge
 ```bash
-python -m playt_player.interface.cli.player_cli "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
+python -m playt_player.interface.cli.player_cli "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
 ```
 
 **Note:** If using Poetry, you can use `poetry run` prefix:

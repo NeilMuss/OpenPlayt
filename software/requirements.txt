@@ -1,1 +1,3 @@
 # Runtime dependencies for Playt Player
+pywebview>=4.4.1
+

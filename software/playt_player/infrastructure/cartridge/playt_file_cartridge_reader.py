@@ -1,8 +1,10 @@
 """Playt file cartridge reader implementation for .playt zip files."""
 
 import shutil
+import subprocess
 import tempfile
 import zipfile
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -63,6 +65,57 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
         except (zipfile.BadZipFile, IOError):
             return None
 
+    def _clean_title(self, title: str) -> str:
+        """Remove leading track numbers from title."""
+        # Remove leading digits and separators
+        return re.sub(r"^\d+[\s\.\-_]+", "", title)
+
+    def _get_duration(self, file_path: Path) -> Optional[float]:
+        """Get duration of audio file using ffprobe."""
+        try:
+            # ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp3
+            cmd = [
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                str(file_path)
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return float(result.stdout.strip())
+        except (subprocess.SubprocessError, ValueError):
+            return None
+
+    def _parse_metadata(
+        self, filename: str, default_album: str
+    ) -> tuple[str, str, str]:
+        """
+        Parse metadata from filename.
+
+        Convention: Artist - Album - Song
+
+        Args:
+            filename: Filename without extension
+            default_album: Default album name to use if not parsed
+
+        Returns:
+            Tuple of (title, artist, album)
+        """
+        parts = filename.split(" - ")
+        
+        if len(parts) >= 3:
+            artist = parts[0]
+            album = parts[1]
+            title = " - ".join(parts[2:])
+            return self._clean_title(title), artist, album
+        elif len(parts) == 2:
+            # Assuming Artist - Song
+            artist = parts[0]
+            title = parts[1]
+            return self._clean_title(title), artist, default_album
+        else:
+            return self._clean_title(filename), "Unknown Artist", default_album
+
     def load_album_from_cartridge(self, cartridge: Cartridge) -> Optional[Album]:
         """
         Load album data from a .playt file.
@@ -115,26 +168,50 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
 
             # Create songs from audio files
             songs: list[Song] = []
+            
+            # Track potential album metadata
+            artists = set()
+            albums = set()
+            
             for idx, audio_file in enumerate(sorted(audio_files), start=1):
                 # Get filename without extension for title
-                title = audio_file.stem
+                filename_stem = audio_file.stem
+                
+                title, artist, album_name = self._parse_metadata(
+                    filename_stem, cartridge.cid
+                )
+                
+                if artist != "Unknown Artist":
+                    artists.add(artist)
+                albums.add(album_name)
 
                 # Create song - file_path will be absolute path to extracted file
                 song = Song(
                     title=title,
-                    artist="Unknown Artist",
-                    album=cartridge.cid,  # Use cartridge ID as album name
-                    duration_secs=None,  # Duration can be extracted later if needed
+                    artist=artist,
+                    album=album_name,
+                    duration_secs=self._get_duration(audio_file),
                     file_path=str(audio_file),
                     track_number=idx,
                     metadata={},
                 )
                 songs.append(song)
 
+            # Determine album artist and title
+            album_artist = "Unknown Artist"
+            if len(artists) == 1:
+                album_artist = list(artists)[0]
+            elif len(artists) > 1:
+                album_artist = "Various Artists"
+                
+            album_title = cartridge.cid
+            if len(albums) == 1:
+                album_title = list(albums)[0]
+
             # Create album
             album = Album(
-                title=cartridge.cid,
-                artist="Unknown Artist",
+                title=album_title,
+                artist=album_artist,
                 year=None,
                 genre=None,
                 songs=songs,
