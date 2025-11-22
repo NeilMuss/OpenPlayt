@@ -1,7 +1,7 @@
 """CLI logger implementation with observer pattern for output handling."""
 
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, TextIO
 
 from ...domain.interfaces.observer import Observer, Subject
 
@@ -18,7 +18,7 @@ class LogLevel(Enum):
 class CLIOutputObserver(Observer):
     """Observer that writes log messages to an output stream."""
 
-    def __init__(self, output_stream, error_stream=None) -> None:
+    def __init__(self, output_stream: TextIO, error_stream: Optional[TextIO] = None) -> None:
         """
         Initialize the output observer.
 

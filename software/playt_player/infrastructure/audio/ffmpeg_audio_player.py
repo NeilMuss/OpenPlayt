@@ -71,6 +71,9 @@ class FFmpegAudioPlayer(AudioPlayerInterface):
 
         self.stop()
 
+        if not self._ffplay_path:
+            raise RuntimeError("ffplay path not configured")
+
         cmd = [
             self._ffplay_path,
             "-nodisp",

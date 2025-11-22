@@ -1,6 +1,6 @@
 """Song domain entity representing a single audio track."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
@@ -25,12 +25,12 @@ class Song:
     duration_secs: Optional[float]
     file_path: str
     track_number: Optional[int] = None
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Initialize default metadata if not provided."""
-        if self.metadata is None:
-            object.__setattr__(self, "metadata", {})
+        # default_factory handles initialization
+        pass
 
     def __repr__(self) -> str:
         """String representation of the song."""

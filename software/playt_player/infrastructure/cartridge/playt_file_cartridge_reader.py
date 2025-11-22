@@ -144,9 +144,9 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
         except (zipfile.BadZipFile, IOError, OSError) as e:
             # Clean up on error
             if cartridge.cid in self._temp_dirs:
-                temp_dir = self._temp_dirs[cartridge.cid]
-                if temp_dir.exists():
-                    shutil.rmtree(temp_dir)
+                temp_path = self._temp_dirs[cartridge.cid]
+                if temp_path.exists():
+                    shutil.rmtree(temp_path)
                 del self._temp_dirs[cartridge.cid]
             return None
 

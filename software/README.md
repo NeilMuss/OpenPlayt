@@ -110,7 +110,7 @@ python -m playt_player.interface.cli.player_cli
 
 #### Example: play the provided cartridge
 ```bash
-python -m playt_player.interface.cli.player_cli "/Users/neilmussett/Downloads/TheSpells-TheNightHasEyes.playt"
+python -m playt_player.interface.cli.player_cli "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
 ```
 
 **Note:** If using Poetry, you can use `poetry run` prefix:
@@ -127,7 +127,7 @@ poetry run python -m playt_player.interface.cli.player_cli /path/to/album.playt
 - `stop` - Stop playback
 - `next` - Skip to next track
 - `prev` - Go to previous track
-- `load <path>` - Load album from cartridge or .playt file (e.g., `load /path/to/album.playt`)
+- `load <path>` - Load album from .playt file (e.g., `load /path/to/album.playt`)
 - `status` - Show current status
 - `help` - Show help message
 - `quit` / `q` - Exit the player
@@ -154,6 +154,8 @@ The `.playt` file should be a zip archive with audio files in the top-level fold
 Cartridges can also be directories containing:
 - `metadata.json` - Cartridge and album metadata
 - Audio files referenced in the metadata
+
+**Note:** Direct loading of directory-based cartridges via the CLI `load` command is not yet implemented in the interactive mode. This format is primarily for development and future hardware integration.
 
 Example cartridge structure:
 ```
