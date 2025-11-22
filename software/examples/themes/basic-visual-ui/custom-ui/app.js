@@ -39,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         console.log("Bridge connected");
         
+        // Debug: Check Charset
+        console.log("Document Character Set:", document.characterSet);
+        if (document.characterSet !== "UTF-8") {
+            console.error("CRITICAL: Document is not UTF-8!");
+        }
+        
         // Subscribe to events
         window.playt.onTrackChange(handleTrackChange);
         window.playt.onPlaybackState(handlePlaybackState);
@@ -53,8 +59,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Handlers ---
 
     function handleTrackChange(track) {
-        elTrackTitle.textContent = track.title || "Unknown Title";
-        elTrackArtist.textContent = track.artist || "Unknown Artist";
+        // Debug: Inspect data integrity
+        if (track.title) {
+            console.log("TITLE RAW:", track.title);
+            console.log("CHAR CODES:", [...track.title].map(c => c.charCodeAt(0)));
+        }
+
+        // Normalize strings
+        const title = (track.title || "Unknown Title").normalize('NFC');
+        const artist = (track.artist || "Unknown Artist").normalize('NFC');
+
+        elTrackTitle.textContent = title;
+        elTrackArtist.textContent = artist;
         duration = track.duration || 0;
         elTotalTime.textContent = formatTime(duration);
         elProgressBar.max = duration;

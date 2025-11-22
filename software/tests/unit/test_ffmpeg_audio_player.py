@@ -51,7 +51,18 @@ def test_play_invokes_ffplay(mock_which: MagicMock) -> None:
         player.play("/tmp/song.mp3")
 
     mock_popen.assert_called_once_with(
-        ["/usr/bin/ffplay", "-nodisp", "-autoexit", "-loglevel", "error", "/tmp/song.mp3"],
+        [
+            "/usr/bin/ffplay",
+            "-nodisp",
+            "-autoexit",
+            "-loglevel",
+            "error",
+            "-volume",
+            "100",
+            "-ss",
+            "0.0",
+            "/tmp/song.mp3",
+        ],
         stdin=subprocess.DEVNULL,  # type: ignore[arg-type]
     )
     assert player.is_playing()

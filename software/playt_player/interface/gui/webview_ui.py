@@ -149,7 +149,7 @@ class WebViewUI(Observer):
             )
 
         self._window = webview.create_window(
-            "Playt Player", 
+            "Playt Player",
             url=f"file://{self._html_path}",
             js_api=self._js_api,
             width=1024,
@@ -176,7 +176,9 @@ class WebViewUI(Observer):
                     "coverArt": data.cover_art_path,
                     "slideshowImages": data.slideshow_images
                 }
-                self._window.evaluate_js(f"window.playt._emitTrackChange({json.dumps(song_data)})")
+                # Ensure unicode characters are preserved by disabling ascii escaping
+                json_str = json.dumps(song_data, ensure_ascii=False)
+                self._window.evaluate_js(f"window.playt._emitTrackChange({json_str})")
                 self._window.evaluate_js("window.playt._emitPlaybackState('playing')")
                 
             elif event_type == "track_paused":

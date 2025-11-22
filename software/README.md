@@ -91,7 +91,14 @@ tests/
 
 ## Usage
 
-### Running the Player
+### Running the Player GUI
+
+#### Load the sample .playt file:
+```bash
+python run_player.py "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
+```
+
+### Running the Player in the Command Line Interface (CLI)
 
 #### Load and play a .playt file:
 ```bash

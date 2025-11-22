@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import zipfile
 import re
+import unicodedata
 from pathlib import Path
 from typing import Optional
 
@@ -68,9 +69,11 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
             return None
 
     def _clean_title(self, title: str) -> str:
-        """Remove leading track numbers from title."""
+        """Remove leading track numbers from title and normalize."""
         # Remove leading digits and separators
-        return re.sub(r"^\d+[\s\.\-_]+", "", title)
+        title = re.sub(r"^\d+[\s\.\-_]+", "", title)
+        # Normalize unicode characters to NFC (composed) form
+        return unicodedata.normalize("NFC", title)
 
     def _get_duration(self, file_path: Path) -> Optional[float]:
         """Get duration of audio file using ffprobe."""
@@ -109,14 +112,26 @@ class PlaytFileCartridgeReader(CartridgeReaderInterface):
             artist = parts[0]
             album = parts[1]
             title = " - ".join(parts[2:])
-            return self._clean_title(title), artist, album
+            return (
+                self._clean_title(title),
+                unicodedata.normalize("NFC", artist),
+                unicodedata.normalize("NFC", album),
+            )
         elif len(parts) == 2:
             # Assuming Artist - Song
             artist = parts[0]
             title = parts[1]
-            return self._clean_title(title), artist, default_album
+            return (
+                self._clean_title(title),
+                unicodedata.normalize("NFC", artist),
+                unicodedata.normalize("NFC", default_album),
+            )
         else:
-            return self._clean_title(filename), "Unknown Artist", default_album
+            return (
+                self._clean_title(filename),
+                "Unknown Artist",
+                unicodedata.normalize("NFC", default_album),
+            )
 
     def _find_cover_art(self, directory: Path) -> tuple[Optional[str], list[str]]:
         """
