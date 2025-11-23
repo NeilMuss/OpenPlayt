@@ -10,7 +10,7 @@ from typing import Callable, List, Optional
 
 class VisualizationStub:
     """
-    Generates mock visualization data (spectrum and RMS) for testing UI.
+    Generates mock visualization data (spectrum, RMS, and amplitude) for testing UI.
     """
 
     def __init__(self) -> None:
@@ -18,15 +18,18 @@ class VisualizationStub:
         self._thread: Optional[threading.Thread] = None
         self._on_spectrum_callback: Optional[Callable[[List[float]], None]] = None
         self._on_rms_callback: Optional[Callable[[float], None]] = None
+        self._on_amplitude_callback: Optional[Callable[[float], None]] = None
 
     def set_callbacks(
         self,
         on_spectrum: Optional[Callable[[List[float]], None]] = None,
         on_rms: Optional[Callable[[float], None]] = None,
+        on_amplitude: Optional[Callable[[float], None]] = None,
     ) -> None:
         """Set callbacks for receiving visualization data."""
         self._on_spectrum_callback = on_spectrum
         self._on_rms_callback = on_rms
+        self._on_amplitude_callback = on_amplitude
 
     def start(self) -> None:
         """Start generating mock data."""
@@ -47,7 +50,7 @@ class VisualizationStub:
     def _loop(self) -> None:
         """Main loop for generating data."""
         while self._running:
-            # Emit data approximately every 200ms
+            # Emit data approximately every 50ms (~20fps)
             start_time = time.time()
 
             if self._on_spectrum_callback:
@@ -59,8 +62,13 @@ class VisualizationStub:
                 # Random float between 0 and 1
                 rms = random.random()
                 self._on_rms_callback(rms)
+            
+            if self._on_amplitude_callback:
+                # Random amplitude value between 0 and 1
+                amplitude = random.random()
+                self._on_amplitude_callback(amplitude)
 
-            # Sleep for remaining time to hit ~5fps
+            # Sleep for remaining time to hit ~20fps
             elapsed = time.time() - start_time
-            sleep_time = max(0.0, 0.2 - elapsed)
+            sleep_time = max(0.0, 0.05 - elapsed)
             time.sleep(sleep_time)

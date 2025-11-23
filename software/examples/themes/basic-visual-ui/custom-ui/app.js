@@ -271,7 +271,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let visualizerActive = false;
     let animationId = null;
+    let currentVisualizer = 'pulse';  // Default to pulse
+    let config = {
+        enabled: true,
+        active_visualizer: 'pulse',
+        visualizers: {
+            colorwash: { speed: 0.5 },
+            pulse: { sensitivity: 1.0 }
+        }
+    };
+
+    // Visualizer state
     let hue = 0;
+    let amplitude = 0.0;
+
+    // Load config
+    async function loadConfig() {
+        try {
+            // Config file in same directory as HTML
+            const response = await fetch('visualizer_config.json');
+            if (response.ok) {
+                config = await response.json();
+                currentVisualizer = config.active_visualizer || 'pulse';
+                console.log('Loaded visualizer config:', currentVisualizer);
+            } else {
+                console.log('Config file not found, using pulse as default');
+                currentVisualizer = 'pulse';
+            }
+        } catch (e) {
+            console.log('Error loading config, using pulse as default:', e);
+            currentVisualizer = 'pulse';
+        }
+    }
+
+    // Set up amplitude listener when window.playt is ready
+    function setupAmplitudeListener() {
+        if (window.playt && window.playt.onAmplitude) {
+            window.playt.onAmplitude(val => {
+                amplitude = val;
+            });
+        } else {
+            // Retry after a short delay if not ready yet
+            setTimeout(setupAmplitudeListener, 100);
+        }
+    }
+
+    // Start listening for amplitude
+    setupAmplitudeListener();
 
     // Resize canvas to fill screen
     function resizeCanvas() {
@@ -284,7 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
         visualizerActive = true;
         visualizerScreen.style.display = 'block';
         resizeCanvas();
-        startAnimation();
+        loadConfig().then(() => {
+            startAnimation();
+        });
     }
 
     // Close visualizer
@@ -294,16 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
         stopAnimation();
     }
 
-    // Simple gradient animation
-    function animate() {
-        if (!visualizerActive) return;
+    // Colorwash visualizer
+    function animateColorwash() {
+        const speed = config.visualizers.colorwash?.speed || 0.5;
+        hue = (hue + (0.2 * speed)) % 360;
 
-        animationId = requestAnimationFrame(animate);
-
-        // Slowly shift hue
-        hue = (hue + 0.2) % 360;
-
-        // Create gradient
         const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
         gradient.addColorStop(0, `hsl(${hue}, 60%, 20%)`);
         gradient.addColorStop(0.5, `hsl(${(hue + 60) % 360}, 50%, 15%)`);
@@ -311,6 +354,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Pulse visualizer
+    function animatePulse() {
+        const sensitivity = config.visualizers.pulse?.sensitivity || 1.0;
+
+        // Clear with dark background
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Calculate pulse size based on amplitude
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const baseRadius = Math.min(canvas.width, canvas.height) * 0.15;
+        const pulseRadius = baseRadius + (amplitude * sensitivity * 200);
+
+        // Draw pulsing circle with glow
+        const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, pulseRadius
+        );
+
+        // Color shifts slightly with amplitude
+        const pulseHue = 200 + (amplitude * 60);
+        gradient.addColorStop(0, `hsla(${pulseHue}, 70%, 60%, 0.8)`);
+        gradient.addColorStop(0.5, `hsla(${pulseHue}, 60%, 50%, 0.4)`);
+        gradient.addColorStop(1, `hsla(${pulseHue}, 50%, 40%, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Main animation loop
+    function animate() {
+        if (!visualizerActive) return;
+
+        animationId = requestAnimationFrame(animate);
+
+        // Switch based on active visualizer
+        if (currentVisualizer === 'pulse') {
+            animatePulse();
+        } else {
+            animateColorwash();
+        }
     }
 
     function startAnimation() {

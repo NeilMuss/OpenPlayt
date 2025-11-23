@@ -145,7 +145,8 @@ class WebViewUI(Observer):
         if self._visualization_stub:
             self._visualization_stub.set_callbacks(
                 on_spectrum=self._on_spectrum,
-                on_rms=self._on_rms
+                on_rms=self._on_rms,
+                on_amplitude=self._on_amplitude
             )
 
         self._window = webview.create_window(
@@ -225,7 +226,8 @@ class WebViewUI(Observer):
                 trackChange: [],
                 progress: [],
                 spectrum: [],
-                rms: []
+                rms: [],
+                amplitude: []
             },
             
             // Actions
@@ -249,6 +251,7 @@ class WebViewUI(Observer):
             onProgress: function(cb) { this._listeners.progress.push(cb); },
             onSpectrum: function(cb) { this._listeners.spectrum.push(cb); },
             onRMS: function(cb) { this._listeners.rms.push(cb); },
+            onAmplitude: function(cb) { this._listeners.amplitude.push(cb); },
             
             // Internal Emitters
             _emitPlaybackState: function(state) { 
@@ -265,6 +268,9 @@ class WebViewUI(Observer):
             },
             _emitRMS: function(val) { 
                 this._listeners.rms.forEach(cb => cb(val)); 
+            },
+            _emitAmplitude: function(val) { 
+                this._listeners.amplitude.forEach(cb => cb(val)); 
             }
         };
         """
@@ -331,6 +337,14 @@ class WebViewUI(Observer):
         if self._window:
             try:
                 self._window.evaluate_js(f"window.playt._emitRMS({val})")
+            except Exception:
+                pass
+    
+    def _on_amplitude(self, val: float) -> None:
+        """Handle amplitude data from stub."""
+        if self._window:
+            try:
+                self._window.evaluate_js(f"window.playt._emitAmplitude({val})")
             except Exception:
                 pass
 
