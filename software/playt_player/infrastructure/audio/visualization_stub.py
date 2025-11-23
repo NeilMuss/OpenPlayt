@@ -7,10 +7,12 @@ import threading
 import time
 from typing import Callable, List, Optional
 
+from .beat_detector import BeatDetector
+
 
 class VisualizationStub:
     """
-    Generates mock visualization data (spectrum, RMS, and amplitude) for testing UI.
+    Generates mock visualization data (spectrum, RMS, amplitude, and beats) for testing UI.
     """
 
     def __init__(self) -> None:
@@ -19,17 +21,23 @@ class VisualizationStub:
         self._on_spectrum_callback: Optional[Callable[[List[float]], None]] = None
         self._on_rms_callback: Optional[Callable[[float], None]] = None
         self._on_amplitude_callback: Optional[Callable[[float], None]] = None
+        self._on_beat_callback: Optional[Callable[[], None]] = None
+        
+        # Beat detector with default settings
+        self._beat_detector = BeatDetector(threshold=1.6, cooldown_ms=250)
 
     def set_callbacks(
         self,
         on_spectrum: Optional[Callable[[List[float]], None]] = None,
         on_rms: Optional[Callable[[float], None]] = None,
         on_amplitude: Optional[Callable[[float], None]] = None,
+        on_beat: Optional[Callable[[], None]] = None,
     ) -> None:
         """Set callbacks for receiving visualization data."""
         self._on_spectrum_callback = on_spectrum
         self._on_rms_callback = on_rms
         self._on_amplitude_callback = on_amplitude
+        self._on_beat_callback = on_beat
 
     def start(self) -> None:
         """Start generating mock data."""
@@ -63,10 +71,17 @@ class VisualizationStub:
                 rms = random.random()
                 self._on_rms_callback(rms)
             
+            # Generate amplitude and detect beats
+            amplitude = random.random()
+            
             if self._on_amplitude_callback:
-                # Random amplitude value between 0 and 1
-                amplitude = random.random()
                 self._on_amplitude_callback(amplitude)
+            
+            # Detect beat
+            if self._on_beat_callback:
+                beat_detected = self._beat_detector.detect(amplitude)
+                if beat_detected:
+                    self._on_beat_callback()
 
             # Sleep for remaining time to hit ~20fps
             elapsed = time.time() - start_time

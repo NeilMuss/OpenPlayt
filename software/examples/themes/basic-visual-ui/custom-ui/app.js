@@ -271,19 +271,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let visualizerActive = false;
     let animationId = null;
-    let currentVisualizer = 'pulse';  // Default to pulse
+    let currentVisualizer = 'beat';  // Default to beat
     let config = {
         enabled: true,
-        active_visualizer: 'pulse',
+        active_visualizer: 'beat',
         visualizers: {
             colorwash: { speed: 0.5 },
-            pulse: { sensitivity: 1.0 }
+            pulse: { sensitivity: 1.0 },
+            beat: { threshold: 1.6, cooldown_ms: 250, flash_intensity: 1.0 }
         }
     };
 
     // Visualizer state
     let hue = 0;
     let amplitude = 0.0;
+    let beatIntensity = 0.0;  // For beat visualizer
+    let rings = [];  // Active beat rings
 
     // Load config
     async function loadConfig() {
@@ -316,8 +319,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Start listening for amplitude
+    // Set up beat listener when window.playt is ready
+    function setupBeatListener() {
+        if (window.playt && window.playt.onBeat) {
+            window.playt.onBeat(() => {
+                // Trigger beat visual
+                beatIntensity = 1.0;
+                // Add expanding ring
+                rings.push({
+                    radius: 0,
+                    maxRadius: Math.min(canvas.width, canvas.height) * 0.6,
+                    alpha: 1.0
+                });
+            });
+        } else {
+            // Retry after a short delay if not ready yet
+            setTimeout(setupBeatListener, 100);
+        }
+    }
+
+    // Start listening for amplitude and beats
     setupAmplitudeListener();
+    setupBeatListener();
 
     // Resize canvas to fill screen
     function resizeCanvas() {
@@ -388,6 +411,44 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fill();
     }
 
+    // Beat visualizer
+    function animateBeat() {
+        const flashIntensity = config.visualizers.beat?.flash_intensity || 1.0;
+
+        // Background with flash effect
+        const bgBrightness = 10 + (beatIntensity * 40 * flashIntensity);
+        ctx.fillStyle = `rgb(${bgBrightness}, ${bgBrightness}, ${bgBrightness})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Draw expanding rings
+        for (let i = rings.length - 1; i >= 0; i--) {
+            const ring = rings[i];
+
+            // Update ring
+            ring.radius += 8;
+            ring.alpha -= 0.02;
+
+            // Remove if faded out
+            if (ring.alpha <= 0 || ring.radius > ring.maxRadius) {
+                rings.splice(i, 1);
+                continue;
+            }
+
+            // Draw ring
+            ctx.strokeStyle = `rgba(100, 200, 255, ${ring.alpha})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, ring.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Decay beat intensity
+        beatIntensity *= 0.92;
+    }
+
     // Main animation loop
     function animate() {
         if (!visualizerActive) return;
@@ -397,6 +458,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Switch based on active visualizer
         if (currentVisualizer === 'pulse') {
             animatePulse();
+        } else if (currentVisualizer === 'beat') {
+            animateBeat();
         } else {
             animateColorwash();
         }
@@ -415,6 +478,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // On-screen feedback system
+    let feedbackTimeout = null;
+
+    function showFeedback(message) {
+        // Create or get feedback element
+        let feedback = document.getElementById('visualizer-feedback');
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.id = 'visualizer-feedback';
+            feedback.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 10px;
+                font-size: 24px;
+                font-weight: bold;
+                z-index: 2000;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s;
+            `;
+            document.body.appendChild(feedback);
+        }
+
+        feedback.textContent = message;
+        feedback.style.opacity = '1';
+
+        // Clear existing timeout
+        if (feedbackTimeout) {
+            clearTimeout(feedbackTimeout);
+        }
+
+        // Hide after 1.5 seconds
+        feedbackTimeout = setTimeout(() => {
+            feedback.style.opacity = '0';
+        }, 1500);
+    }
+
     // Event listeners
     if (btnVisualizer) {
         btnVisualizer.addEventListener('click', openVisualizer);
@@ -430,10 +535,61 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ESC key to close visualizer
+    // Keyboard controls
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && visualizerActive) {
+        if (!visualizerActive) return;
+
+        // ESC to close
+        if (e.key === 'Escape') {
             closeVisualizer();
+            return;
+        }
+
+        // Tab or Space to cycle visualizers
+        if (e.key === 'Tab' || e.key === ' ') {
+            e.preventDefault();
+            const visualizers = Object.keys(config.visualizers);
+            const currentIndex = visualizers.indexOf(currentVisualizer);
+            const nextIndex = (currentIndex + 1) % visualizers.length;
+            currentVisualizer = visualizers[nextIndex];
+
+            // Reset visualizer-specific state
+            rings = [];
+            beatIntensity = 0;
+
+            showFeedback(`Visualizer: ${currentVisualizer}`);
+            return;
+        }
+
+        // Arrow keys to adjust settings
+        if (e.key.startsWith('Arrow')) {
+            e.preventDefault();
+
+            if (currentVisualizer === 'colorwash') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+                    config.visualizers.colorwash.speed = Math.min(2.0, config.visualizers.colorwash.speed + 0.1);
+                    showFeedback(`Speed: ${config.visualizers.colorwash.speed.toFixed(1)}`);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                    config.visualizers.colorwash.speed = Math.max(0.1, config.visualizers.colorwash.speed - 0.1);
+                    showFeedback(`Speed: ${config.visualizers.colorwash.speed.toFixed(1)}`);
+                }
+            } else if (currentVisualizer === 'pulse') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+                    config.visualizers.pulse.sensitivity = Math.min(3.0, config.visualizers.pulse.sensitivity + 0.1);
+                    showFeedback(`Sensitivity: ${config.visualizers.pulse.sensitivity.toFixed(1)}`);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                    config.visualizers.pulse.sensitivity = Math.max(0.1, config.visualizers.pulse.sensitivity - 0.1);
+                    showFeedback(`Sensitivity: ${config.visualizers.pulse.sensitivity.toFixed(1)}`);
+                }
+            } else if (currentVisualizer === 'beat') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+                    config.visualizers.beat.flash_intensity = Math.min(2.0, config.visualizers.beat.flash_intensity + 0.1);
+                    showFeedback(`Flash Intensity: ${config.visualizers.beat.flash_intensity.toFixed(1)}`);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                    config.visualizers.beat.flash_intensity = Math.max(0.1, config.visualizers.beat.flash_intensity - 0.1);
+                    showFeedback(`Flash Intensity: ${config.visualizers.beat.flash_intensity.toFixed(1)}`);
+                }
+            }
         }
     });
 });

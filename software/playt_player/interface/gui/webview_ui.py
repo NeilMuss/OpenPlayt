@@ -69,18 +69,19 @@ class PlaytJSApi:
         self._player_service.set_volume(float(value))
 
     def pickFile(self) -> None:
-        """Open file picker to load a cartridge."""
+        """Open a file picker dialog and load the selected .playt file."""
         if not self._player_service:
             return
             
         # This needs to be run on the main thread usually, or via window
         # We don't have easy access to window here, but we can use webview.windows[0]
         if len(webview.windows) > 0:
+            from webview import FileDialog
             window = webview.windows[0]
             result = window.create_file_dialog(
-                webview.OPEN_DIALOG, 
-                allow_multiple=False, 
-                file_types=('Playt Files (*.playt)', 'All files (*.*)')
+                FileDialog.OPEN,
+                allow_multiple=False,
+                file_types=("Playt Files (*.playt)",)
             )
             
             if result and len(result) > 0:
@@ -146,7 +147,8 @@ class WebViewUI(Observer):
             self._visualization_stub.set_callbacks(
                 on_spectrum=self._on_spectrum,
                 on_rms=self._on_rms,
-                on_amplitude=self._on_amplitude
+                on_amplitude=self._on_amplitude,
+                on_beat=self._on_beat
             )
 
         self._window = webview.create_window(
@@ -227,7 +229,8 @@ class WebViewUI(Observer):
                 progress: [],
                 spectrum: [],
                 rms: [],
-                amplitude: []
+                amplitude: [],
+                beat: []
             },
             
             // Actions
@@ -252,6 +255,7 @@ class WebViewUI(Observer):
             onSpectrum: function(cb) { this._listeners.spectrum.push(cb); },
             onRMS: function(cb) { this._listeners.rms.push(cb); },
             onAmplitude: function(cb) { this._listeners.amplitude.push(cb); },
+            onBeat: function(cb) { this._listeners.beat.push(cb); },
             
             // Internal Emitters
             _emitPlaybackState: function(state) { 
@@ -271,6 +275,9 @@ class WebViewUI(Observer):
             },
             _emitAmplitude: function(val) { 
                 this._listeners.amplitude.forEach(cb => cb(val)); 
+            },
+            _emitBeat: function() { 
+                this._listeners.beat.forEach(cb => cb()); 
             }
         };
         """
@@ -345,6 +352,14 @@ class WebViewUI(Observer):
         if self._window:
             try:
                 self._window.evaluate_js(f"window.playt._emitAmplitude({val})")
+            except Exception:
+                pass
+    
+    def _on_beat(self) -> None:
+        """Handle beat event from stub."""
+        if self._window:
+            try:
+                self._window.evaluate_js("window.playt._emitBeat()")
             except Exception:
                 pass
 
