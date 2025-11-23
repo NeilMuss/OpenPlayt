@@ -38,18 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function init() {
         console.log("Bridge connected");
-        
+
         // Debug: Check Charset
         console.log("Document Character Set:", document.characterSet);
         if (document.characterSet !== "UTF-8") {
             console.error("CRITICAL: Document is not UTF-8!");
         }
-        
+
         // Subscribe to events
         window.playt.onTrackChange(handleTrackChange);
         window.playt.onPlaybackState(handlePlaybackState);
         window.playt.onProgress(handleProgress);
-        
+
         // Tell Python we are ready
         if (window.playt.onReady) {
             window.playt.onReady(() => console.log("UI Ready"));
@@ -75,14 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
         elTotalTime.textContent = formatTime(duration);
         elProgressBar.max = duration;
         elProgressBar.disabled = false;
-        
+
         // Update cover art and slideshow
         currentCoverArt = track.coverArt || null;
         slideshowImages = track.slideshowImages || [];
-        
+
         // Stop any existing slideshow
         stopSlideshow();
-        
+
         if (currentCoverArt) {
             elAlbumArt.src = currentCoverArt;
             elAlbumArt.style.display = 'block';
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elAlbumArt.style.display = 'none';
             elArtworkPlaceholder.style.display = 'flex';
         }
-        
+
         // Start slideshow if playing and we have images
         if (isPlaying && slideshowImages.length > 0 && isSlideshowEnabled) {
             startSlideshow();
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePlaybackState(state) {
         isPlaying = (state === 'playing');
         updatePlayButton();
-        
+
         if (isPlaying) {
             if (slideshowImages.length > 0 && isSlideshowEnabled) {
                 startSlideshow();
@@ -115,30 +115,30 @@ document.addEventListener('DOMContentLoaded', () => {
             stopSlideshow();
             // Reset to cover art when paused/stopped
             if (currentCoverArt) {
-                 elAlbumArt.src = currentCoverArt;
+                elAlbumArt.src = currentCoverArt;
             }
         }
     }
 
     function startSlideshow() {
         stopSlideshow(); // Ensure no duplicates
-        
+
         // Start with the first image (or continue from where we left off? 
         // Let's start from index 0 or a random one. Let's try sequential for now.)
         // Actually, let's show the cover art first, then cycle?
         // Or just start cycling.
-        
+
         // If we have images, cycle them every 15 seconds
         slideshowInterval = setInterval(() => {
-             if (slideshowImages.length === 0) return;
-             
-             // Next image
-             currentImageIndex = (currentImageIndex + 1) % slideshowImages.length;
-             const nextImage = slideshowImages[currentImageIndex];
-             
-             // Create a fade effect maybe? For now just swap source
-             elAlbumArt.src = nextImage;
-             
+            if (slideshowImages.length === 0) return;
+
+            // Next image
+            currentImageIndex = (currentImageIndex + 1) % slideshowImages.length;
+            const nextImage = slideshowImages[currentImageIndex];
+
+            // Create a fade effect maybe? For now just swap source
+            elAlbumArt.src = nextImage;
+
         }, 15000); // 15 seconds
     }
 
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ignore if typing in an input (though we don't have inputs here really)
         if (e.target.tagName === 'INPUT' && e.target.type === 'text') return;
 
-        switch(e.code) {
+        switch (e.code) {
             case 'Space':
                 e.preventDefault();
                 window.playt.togglePlay();
@@ -261,4 +261,90 @@ document.addEventListener('DOMContentLoaded', () => {
         const s = Math.floor(seconds % 60);
         return `${m}:${s.toString().padStart(2, '0')}`;
     }
+
+    // --- Visualizer ---
+    const btnVisualizer = document.getElementById('btn-visualizer');
+    const btnCloseVisualizer = document.getElementById('btn-close-visualizer');
+    const visualizerScreen = document.getElementById('visualizer-screen');
+    const canvas = document.getElementById('visualizer-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let visualizerActive = false;
+    let animationId = null;
+    let hue = 0;
+
+    // Resize canvas to fill screen
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    // Open visualizer
+    function openVisualizer() {
+        visualizerActive = true;
+        visualizerScreen.style.display = 'block';
+        resizeCanvas();
+        startAnimation();
+    }
+
+    // Close visualizer
+    function closeVisualizer() {
+        visualizerActive = false;
+        visualizerScreen.style.display = 'none';
+        stopAnimation();
+    }
+
+    // Simple gradient animation
+    function animate() {
+        if (!visualizerActive) return;
+
+        animationId = requestAnimationFrame(animate);
+
+        // Slowly shift hue
+        hue = (hue + 0.2) % 360;
+
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, `hsl(${hue}, 60%, 20%)`);
+        gradient.addColorStop(0.5, `hsl(${(hue + 60) % 360}, 50%, 15%)`);
+        gradient.addColorStop(1, `hsl(${(hue + 120) % 360}, 55%, 18%)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function startAnimation() {
+        if (!animationId) {
+            animate();
+        }
+    }
+
+    function stopAnimation() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+    }
+
+    // Event listeners
+    if (btnVisualizer) {
+        btnVisualizer.addEventListener('click', openVisualizer);
+    }
+
+    if (btnCloseVisualizer) {
+        btnCloseVisualizer.addEventListener('click', closeVisualizer);
+    }
+
+    window.addEventListener('resize', () => {
+        if (visualizerActive) {
+            resizeCanvas();
+        }
+    });
+
+    // ESC key to close visualizer
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && visualizerActive) {
+            closeVisualizer();
+        }
+    });
 });

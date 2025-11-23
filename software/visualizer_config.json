@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "visualizers": {
+    "default": {
+      "name": "Gradient Wash",
+      "type": "gradient",
+      "settings": {
+        "animationSpeed": 0.5,
+        "colors": [
+          "#1a1a2e",
+          "#16213e",
+          "#0f3460",
+          "#533483"
+        ],
+        "transitionDuration": 3000
+      }
+    }
+  },
+  "activeVisualizer": "default",
+  "globalSettings": {
+    "enabled": true,
+    "fullscreen": true,
+    "opacity": 1.0
+  }
+}

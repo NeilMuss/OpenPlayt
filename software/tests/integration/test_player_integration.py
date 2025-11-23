@@ -25,6 +25,11 @@ class MockAudioPlayer(AudioPlayerInterface):
         self._position = 0.0
         self._current_file: Optional[str] = None
         self._play_calls: list[str] = []
+        self._volume = 1.0
+
+    def set_volume(self, volume: float) -> None:
+        """Set the playback volume."""
+        self._volume = volume
 
     def play(self, file_path: str) -> None:
         """Start playing an audio file."""
