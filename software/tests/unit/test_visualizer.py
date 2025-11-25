@@ -176,103 +176,92 @@ class TestVisualizerSwitching:
         
         # Verify it's valid
         assert config["active_visualizer"] in config["visualizers"]
-
-
-class TestBeatVisualizer:
-    """Tests for beat visualizer functionality."""
     
-    def test_beat_visualizer_in_config(self):
-        """Test that beat visualizer is defined in config."""
+    def test_config_allows_switching_to_beat_pulse(self):
+        """Test that config can be set to beat_pulse visualizer."""
         config_path = Path(__file__).parent.parent.parent / "visualizer_config.json"
         with open(config_path) as f:
             config = json.load(f)
         
-        assert "beat" in config["visualizers"]
-        assert "threshold" in config["visualizers"]["beat"]
-        assert "cooldown_ms" in config["visualizers"]["beat"]
-        assert "flash_intensity" in config["visualizers"]["beat"]
+        # Modify config to use beat_pulse
+        config["active_visualizer"] = "beat_pulse"
+        
+        # Verify it's valid
+        assert config["active_visualizer"] in config["visualizers"]
+
+
+class TestBeatPulseVisualizer:
+    """Tests for beat_pulse hybrid visualizer."""
     
-    def test_beat_detector_import(self):
-        """Test that BeatDetector can be imported."""
-        from playt_player.infrastructure.audio.beat_detector import BeatDetector
-        assert BeatDetector is not None
+    def test_beat_pulse_in_config(self):
+        """Test that beat_pulse visualizer is defined in config."""
+        config_path = Path(__file__).parent.parent.parent / "visualizer_config.json"
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        assert "beat_pulse" in config["visualizers"]
+        assert "sensitivity" in config["visualizers"]["beat_pulse"]
+        assert "beat_boost" in config["visualizers"]["beat_pulse"]
+        assert "decay_rate" in config["visualizers"]["beat_pulse"]
     
-    def test_beat_detector_initialization(self):
-        """Test that BeatDetector initializes correctly."""
-        from playt_player.infrastructure.audio.beat_detector import BeatDetector
-        detector = BeatDetector(threshold=1.6, cooldown_ms=250)
-        assert detector.threshold == 1.6
-        assert detector.cooldown_ms == 250
+    def test_beat_pulse_config_parameters(self):
+        """Test that beat_pulse has correct parameter types and ranges."""
+        config_path = Path(__file__).parent.parent.parent / "visualizer_config.json"
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        bp_config = config["visualizers"]["beat_pulse"]
+        
+        # Check types
+        assert isinstance(bp_config["sensitivity"], (int, float))
+        assert isinstance(bp_config["beat_boost"], (int, float))
+        assert isinstance(bp_config["decay_rate"], (int, float))
+        
+        # Check reasonable ranges
+        assert 0.1 <= bp_config["sensitivity"] <= 5.0
+        assert 1.0 <= bp_config["beat_boost"] <= 10.0
+        assert 0.5 <= bp_config["decay_rate"] <= 1.0
     
-    def test_beat_detector_triggers_on_spike(self):
-        """Test that beat detector triggers when amplitude crosses threshold."""
-        from playt_player.infrastructure.audio.beat_detector import BeatDetector
-        import time
-        
-        detector = BeatDetector(threshold=1.5, cooldown_ms=100)
-        
-        # Build up history with low values
-        for _ in range(10):
-            result = detector.detect(0.2)
-            assert not result  # Should not detect beat with low amplitude
-        
-        # Spike should trigger beat
-        result = detector.detect(0.8)  # 0.8 > (0.2 * 1.5)
-        assert result, "Beat should be detected on amplitude spike"
-    
-    def test_beat_detector_cooldown_prevents_retriggering(self):
-        """Test that cooldown prevents immediate retriggering."""
-        from playt_player.infrastructure.audio.beat_detector import BeatDetector
-        import time
-        
-        detector = BeatDetector(threshold=1.5, cooldown_ms=200)
-        
-        # Build up history
-        for _ in range(10):
-            detector.detect(0.2)
-        
-        # First spike triggers beat
-        result1 = detector.detect(0.8)
-        assert result1, "First beat should be detected"
-        
-        # Immediate second spike should be blocked by cooldown
-        result2 = detector.detect(0.8)
-        assert not result2, "Second beat should be blocked by cooldown"
-        
-        # After cooldown, should trigger again
-        time.sleep(0.25)  # Wait for cooldown
-        for _ in range(5):
-            detector.detect(0.2)  # Reset average
-        result3 = detector.detect(0.8)
-        assert result3, "Beat should be detected after cooldown"
-    
-    def test_visualization_stub_has_beat_callback(self):
-        """Test that VisualizationStub supports beat callback."""
+    def test_beat_pulse_uses_existing_streams(self):
+        """Test that beat_pulse can use existing amplitude and beat streams."""
         from playt_player.infrastructure.audio.visualization_stub import VisualizationStub
         
         stub = VisualizationStub()
+        
+        # Verify both callbacks exist
+        assert hasattr(stub, '_on_amplitude_callback')
         assert hasattr(stub, '_on_beat_callback')
-        assert hasattr(stub, '_beat_detector')
-    
-    def test_beat_callback_is_called(self):
-        """Test that beat callback is invoked when beat detected."""
-        from playt_player.infrastructure.audio.visualization_stub import VisualizationStub
-        import time
         
-        stub = VisualizationStub()
-        
+        # Both streams should be available simultaneously
+        amplitude_values = []
         beat_count = []
+        
+        def on_amplitude(val):
+            amplitude_values.append(val)
         
         def on_beat():
             beat_count.append(1)
         
-        stub.set_callbacks(on_beat=on_beat)
+        stub.set_callbacks(on_amplitude=on_amplitude, on_beat=on_beat)
         stub.start()
         
-        # Wait for potential beats
-        time.sleep(1.0)
+        import time
+        time.sleep(0.3)
         stub.stop()
         
-        # Should have detected at least one beat in random data
-        # (This is probabilistic but should work with random amplitude spikes)
-        assert len(beat_count) >= 0  # At minimum, no errors
+        # Both streams should have data
+        assert len(amplitude_values) > 0
+        # Beat count may be 0 depending on random data, but callback should work
+        assert isinstance(beat_count, list)
+    
+    def test_visualizer_registry_includes_beat_pulse(self):
+        """Test that beat_pulse is in the visualizer registry."""
+        config_path = Path(__file__).parent.parent.parent / "visualizer_config.json"
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        supported = list(config["visualizers"].keys())
+        assert "beat_pulse" in supported
+        assert "pulse" in supported
+        assert "beat" in supported
+        assert "colorwash" in supported

@@ -271,14 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let visualizerActive = false;
     let animationId = null;
-    let currentVisualizer = 'beat';  // Default to beat
+    let currentVisualizer = 'beat_pulse';  // Default to beat_pulse
     let config = {
         enabled: true,
-        active_visualizer: 'beat',
+        active_visualizer: 'beat_pulse',
         visualizers: {
             colorwash: { speed: 0.5 },
             pulse: { sensitivity: 1.0 },
-            beat: { threshold: 1.6, cooldown_ms: 250, flash_intensity: 1.0 }
+            beat: { threshold: 1.6, cooldown_ms: 250, flash_intensity: 1.0 },
+            beat_pulse: { sensitivity: 1.0, beat_boost: 2.5, decay_rate: 0.92 }
         }
     };
 
@@ -287,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let amplitude = 0.0;
     let beatIntensity = 0.0;  // For beat visualizer
     let rings = [];  // Active beat rings
+    let beatBoostMultiplier = 1.0;  // For beat_pulse visualizer
 
     // Load config
     async function loadConfig() {
@@ -325,12 +327,17 @@ document.addEventListener('DOMContentLoaded', () => {
             window.playt.onBeat(() => {
                 // Trigger beat visual
                 beatIntensity = 1.0;
+
                 // Add expanding ring
                 rings.push({
                     radius: 0,
                     maxRadius: Math.min(canvas.width, canvas.height) * 0.6,
                     alpha: 1.0
                 });
+
+                // Boost beat_pulse visualizer
+                const boost = config.visualizers.beat_pulse?.beat_boost || 2.5;
+                beatBoostMultiplier = boost;
             });
         } else {
             // Retry after a short delay if not ready yet
@@ -445,8 +452,69 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.stroke();
         }
 
-        // Decay beat intensity
-        beatIntensity *= 0.92;
+        // Decay beat intensity (for flash)
+        beatIntensity *= 0.90;
+
+        // Decay beat boost back to 1.0 (smooth return to amplitude-driven motion)
+        const decayRate = config.visualizers.beat_pulse?.decay_rate || 0.92;
+        beatBoostMultiplier = 1.0 + (beatBoostMultiplier - 1.0) * decayRate;
+    }
+
+    // Beat Pulse visualizer (Hybrid)
+    function animateBeatPulse() {
+        const sensitivity = config.visualizers.beat_pulse?.sensitivity || 1.0;
+        const decayRate = config.visualizers.beat_pulse?.decay_rate || 0.92;
+
+        // Dark background
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // The "boost" smoothly decays back to 1.0
+        beatBoostMultiplier = 1.0 + (beatBoostMultiplier - 1.0) * decayRate;
+
+        // Calculate size based on amplitude, but amplified by the beat boost
+        const effectiveAmplitude = amplitude * beatBoostMultiplier;
+        const baseRadius = Math.min(canvas.width, canvas.height) * 0.1;
+        const pulseRadius = baseRadius + (effectiveAmplitude * sensitivity * 180);
+
+        // Draw pulsing circle
+        const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, pulseRadius
+        );
+
+        // Color shifts with amplitude, gets more intense with boost
+        const pulseHue = 180 + (effectiveAmplitude * 80);
+        const saturation = 60 + (beatBoostMultiplier > 1.1 ? 20 : 0); // More saturated on beat
+        gradient.addColorStop(0, `hsla(${pulseHue}, ${saturation}%, 60%, 0.8)`);
+        gradient.addColorStop(0.5, `hsla(${pulseHue}, ${saturation}%, 50%, 0.5)`);
+        gradient.addColorStop(1, `hsla(${pulseHue}, ${saturation}%, 40%, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Also draw expanding rings from the 'beat' visualizer for impact
+        for (let i = rings.length - 1; i >= 0; i--) {
+            const ring = rings[i];
+            ring.radius += 8;
+            ring.alpha -= 0.025;
+
+            if (ring.alpha <= 0) {
+                rings.splice(i, 1);
+                continue;
+            }
+
+            ctx.strokeStyle = `rgba(180, 220, 255, ${ring.alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, ring.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 
     // Main animation loop
@@ -460,6 +528,8 @@ document.addEventListener('DOMContentLoaded', () => {
             animatePulse();
         } else if (currentVisualizer === 'beat') {
             animateBeat();
+        } else if (currentVisualizer === 'beat_pulse') {
+            animateBeatPulse();
         } else {
             animateColorwash();
         }
@@ -588,6 +658,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
                     config.visualizers.beat.flash_intensity = Math.max(0.1, config.visualizers.beat.flash_intensity - 0.1);
                     showFeedback(`Flash Intensity: ${config.visualizers.beat.flash_intensity.toFixed(1)}`);
+                }
+            } else if (currentVisualizer === 'beat_pulse') {
+                if (e.key === 'ArrowUp') {
+                    config.visualizers.beat_pulse.sensitivity = Math.min(3.0, config.visualizers.beat_pulse.sensitivity + 0.1);
+                    showFeedback(`Sensitivity: ${config.visualizers.beat_pulse.sensitivity.toFixed(1)}`);
+                } else if (e.key === 'ArrowDown') {
+                    config.visualizers.beat_pulse.sensitivity = Math.max(0.1, config.visualizers.beat_pulse.sensitivity - 0.1);
+                    showFeedback(`Sensitivity: ${config.visualizers.beat_pulse.sensitivity.toFixed(1)}`);
+                } else if (e.key === 'ArrowRight') {
+                    config.visualizers.beat_pulse.beat_boost = Math.min(5.0, config.visualizers.beat_pulse.beat_boost + 0.1);
+                    showFeedback(`Beat Boost: ${config.visualizers.beat_pulse.beat_boost.toFixed(1)}`);
+                } else if (e.key === 'ArrowLeft') {
+                    config.visualizers.beat_pulse.beat_boost = Math.max(1.0, config.visualizers.beat_pulse.beat_boost - 0.1);
+                    showFeedback(`Beat Boost: ${config.visualizers.beat_pulse.beat_boost.toFixed(1)}`);
                 }
             }
         }
