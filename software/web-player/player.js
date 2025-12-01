@@ -50,10 +50,16 @@ class WebAudioPlayer {
         
         // Callback for track ended
         this._onTrackEnded = null;
+        // Callback for playback started
+        this._onPlaybackStarted = null;
     }
 
     setOnTrackEnded(callback) {
         this._onTrackEnded = callback;
+    }
+
+    setOnPlaybackStarted(callback) {
+        this._onPlaybackStarted = callback;
     }
 
     play(filePath) {
@@ -162,6 +168,13 @@ class WebAudioPlayer {
             console.log('Playback started successfully');
             this._state = 'playing';
             this._startPositionTracking();
+            // Notify that playback actually started
+            if (this._onPlaybackStarted) {
+                console.log('Calling _onPlaybackStarted callback');
+                this._onPlaybackStarted();
+            } else {
+                console.warn('_onPlaybackStarted callback not set');
+            }
         }).catch(err => {
             console.error('Failed to play audio:', err);
             console.error('Error name:', err.name);
@@ -173,6 +186,8 @@ class WebAudioPlayer {
             } else {
                 // Other errors - might be format issue or corrupted file
                 console.error('Audio playback error - file might not be supported or corrupted');
+                console.error('Audio src:', this._audio.src);
+                console.error('Audio readyState:', this._audio.readyState);
                 this._state = 'idle';
             }
         });
@@ -192,6 +207,10 @@ class WebAudioPlayer {
             this._audio.play().then(() => {
                 this._state = 'playing';
                 this._startPositionTracking();
+                // Notify that playback started
+                if (this._onPlaybackStarted) {
+                    this._onPlaybackStarted();
+                }
             }).catch(err => {
                 console.error('Failed to resume audio:', err);
                 // If resume fails, try starting from beginning
@@ -284,6 +303,13 @@ export class PlayerService extends Subject {
         // Set up auto-advance callback
         this._audioPlayer.setOnTrackEnded(() => {
             this._handleTrackEnded();
+        });
+        
+        // Set up playback started callback to notify observers
+        this._audioPlayer.setOnPlaybackStarted(() => {
+            if (this._currentSong) {
+                this.notify('playback_started', this._currentSong);
+            }
         });
     }
 
