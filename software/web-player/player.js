@@ -299,6 +299,7 @@ export class PlayerService extends Subject {
         this._currentSong = null;
         this._queue = [];
         this._currentIndex = -1;
+        this._currentAlbumArtUrl = null; // Store album art
         
         // Set up auto-advance callback
         this._audioPlayer.setOnTrackEnded(() => {
@@ -325,6 +326,7 @@ export class PlayerService extends Subject {
         this._queue = orderedSongs;
         this._currentIndex = -1;
         this._currentSong = null;
+        this._currentAlbumArtUrl = album.album_art_url; // Store album art URL
         this.notify('album_loaded', album);
     }
 
@@ -332,6 +334,7 @@ export class PlayerService extends Subject {
         this._queue = [...songs];
         this._currentIndex = -1;
         this._currentSong = null;
+        this._currentAlbumArtUrl = null; // No album context here
         this.notify('queue_loaded', songs);
     }
 
@@ -346,6 +349,11 @@ export class PlayerService extends Subject {
         }
 
         if (this._currentSong) {
+            // Attach album art to the song object for the UI
+            if (this._currentAlbumArtUrl) {
+                this._currentSong.album_art_url = this._currentAlbumArtUrl;
+            }
+            
             const state = this._audioPlayer.getState();
             console.log('Current audio player state:', state);
             
@@ -387,6 +395,10 @@ export class PlayerService extends Subject {
         if (this._currentIndex < this._queue.length - 1) {
             this._currentIndex += 1;
             this._currentSong = this._queue[this._currentIndex];
+            // Attach album art
+            if (this._currentAlbumArtUrl) {
+                this._currentSong.album_art_url = this._currentAlbumArtUrl;
+            }
             this._audioPlayer.play(this._currentSong.file_path);
             this.notify('track_started', this._currentSong);
         } else {
@@ -401,11 +413,19 @@ export class PlayerService extends Subject {
         if (this._currentIndex > 0) {
             this._currentIndex -= 1;
             this._currentSong = this._queue[this._currentIndex];
+            // Attach album art
+            if (this._currentAlbumArtUrl) {
+                this._currentSong.album_art_url = this._currentAlbumArtUrl;
+            }
             this._audioPlayer.play(this._currentSong.file_path);
             this.notify('track_started', this._currentSong);
         } else {
             // Restart current track
             if (this._currentSong) {
+                // Attach album art
+                if (this._currentAlbumArtUrl) {
+                    this._currentSong.album_art_url = this._currentAlbumArtUrl;
+                }
                 this._audioPlayer.play(this._currentSong.file_path);
                 this.notify('track_started', this._currentSong);
             }

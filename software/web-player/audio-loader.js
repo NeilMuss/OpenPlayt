@@ -17,24 +17,34 @@ export async function loadPlaytFile(file) {
     const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
     const zip = await JSZip.loadAsync(file);
 
-    // Find all audio files (ignore __MACOSX and other system files)
+    // Find all audio files and album art
     const audioExtensions = ['.mp3', '.flac', '.wav', '.m4a', '.aac', '.ogg', '.opus'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png'];
     const audioFiles = [];
+    let albumArtEntry = null;
     
     zip.forEach((relativePath, zipEntry) => {
         if (zipEntry.dir) return;
-        if (relativePath.includes('__MACOSX')) return;
+        if (relativePath.startsWith('__MACOSX/')) return;
+
+        const originalFileName = relativePath.split('/').pop();
+        if (!originalFileName) return;
         
-        const fileName = relativePath.split('/').pop();
-        const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-        
+        const lowerFileName = originalFileName.toLowerCase();
+        const extIndex = lowerFileName.lastIndexOf('.');
+        const ext = extIndex !== -1 ? lowerFileName.substring(extIndex) : '';
+
         if (audioExtensions.includes(ext)) {
             audioFiles.push({
                 path: relativePath,
-                name: fileName,
+                name: originalFileName, // Preserve original case
                 entry: zipEntry,
                 extension: ext
             });
+        } else if (imageExtensions.includes(ext) && (lowerFileName.includes('cover') || lowerFileName.includes('folder'))) {
+            if (!albumArtEntry) { // Take the first one found
+                albumArtEntry = zipEntry;
+            }
         }
     });
 
@@ -42,12 +52,18 @@ export async function loadPlaytFile(file) {
         throw new Error('No audio files found in .playt archive');
     }
 
-    // Sort audio files by name
+    // Sort audio files by original name
     audioFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Extract album art if found
+    let albumArtUrl = null;
+    if (albumArtEntry) {
+        const artBlob = await albumArtEntry.async('blob');
+        albumArtUrl = URL.createObjectURL(artBlob);
+    }
 
     // Create songs from audio files
     const songs = [];
-    const baseUrl = URL.createObjectURL(file);
     
     for (let i = 0; i < audioFiles.length; i++) {
         const audioFile = audioFiles[i];
@@ -55,7 +71,8 @@ export async function loadPlaytFile(file) {
         const blobUrl = URL.createObjectURL(blob);
         
         // Extract title from filename (remove extension)
-        const title = audioFile.name.substring(0, audioFile.name.lastIndexOf('.'));
+        const extIndex = audioFile.name.lastIndexOf('.');
+        const title = extIndex !== -1 ? audioFile.name.substring(0, extIndex) : audioFile.name;
 
         // Create song object
         const song = {
@@ -77,7 +94,8 @@ export async function loadPlaytFile(file) {
         artist: 'Unknown Artist',
         year: null,
         genre: null,
-        songs: songs
+        songs: songs,
+        album_art_url: albumArtUrl
     };
 
     return album;

@@ -263,12 +263,23 @@ export class UIController {
             this.elements.songArtist.textContent = song.artist || 'Unknown Artist';
         }
         
-        // Show placeholder artwork
-        if (this.elements.artworkPlaceholder) {
-            this.elements.artworkPlaceholder.style.display = 'flex';
-        }
-        if (this.elements.albumArt) {
-            this.elements.albumArt.style.display = 'none';
+        // Update album art
+        if (song.album_art_url) {
+            if (this.elements.albumArt) {
+                this.elements.albumArt.src = song.album_art_url;
+                this.elements.albumArt.style.display = 'block';
+            }
+            if (this.elements.artworkPlaceholder) {
+                this.elements.artworkPlaceholder.style.display = 'none';
+            }
+        } else {
+            // Show placeholder artwork
+            if (this.elements.artworkPlaceholder) {
+                this.elements.artworkPlaceholder.style.display = 'flex';
+            }
+            if (this.elements.albumArt) {
+                this.elements.albumArt.style.display = 'none';
+            }
         }
     }
 }

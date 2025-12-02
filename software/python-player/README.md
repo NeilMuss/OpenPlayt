@@ -93,38 +93,51 @@ tests/
 
 ### Running the Player GUI
 
-#### Load the sample .playt file:
+**Note:** The `run_player.py` script is located in the parent `software/` directory.
+
+#### From the software directory, load the sample .playt file:
 ```bash
-python run_player.py "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
+python3 run_player.py "python-player/sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
 ```
 
 ### Running the Player in the Command Line Interface (CLI)
 
-#### Load and play a .playt file:
+**Note:** When running the CLI directly, you need to be in the `python-player` directory or adjust the Python path.
+
+#### From the python-player directory:
+
+Load and play a .playt file:
 ```bash
-python -m playt_player.interface.cli.player_cli /path/to/album.playt
+python3 -m playt_player.interface.cli.player_cli /path/to/album.playt
 ```
 
-#### Load and auto-play:
+Load and auto-play:
 ```bash
-python -m playt_player.interface.cli.player_cli /path/to/album.playt --auto-play
+python3 -m playt_player.interface.cli.player_cli /path/to/album.playt --auto-play
 ```
 
-#### Start interactive CLI (then load a .playt file):
+Start interactive CLI (then load a .playt file):
 ```bash
-python -m playt_player.interface.cli.player_cli
+python3 -m playt_player.interface.cli.player_cli
 ```
 
-#### Example: play the provided cartridge
+Example: play the provided cartridge
 ```bash
-python -m playt_player.interface.cli.player_cli "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
+python3 -m playt_player.interface.cli.player_cli "sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
 ```
 
-**Note:** If using Poetry, you can use `poetry run` prefix:
+#### From the software directory (parent):
+
+Use the `run_player.py` script which handles the path automatically:
+```bash
+python3 run_player.py "python-player/sample_data/cartridges/test_album/Lumière Noctae - Échos de Brume.playt"
+```
+
+**Note:** If using Poetry, you can use `poetry run` prefix (from within the python-player directory):
 ```bash
 poetry run playt /path/to/album.playt
 # OR
-poetry run python -m playt_player.interface.cli.player_cli /path/to/album.playt
+poetry run python3 -m playt_player.interface.cli.player_cli /path/to/album.playt
 ```
 
 ### CLI Commands
@@ -144,7 +157,7 @@ poetry run python -m playt_player.interface.cli.player_cli /path/to/album.playt
 You can load `.playt` files (zip archives containing audio files):
 
 ```bash
-python -m playt_player.interface.cli.player_cli album.playt
+python3 -m playt_player.interface.cli.player_cli album.playt
 ```
 
 The `.playt` file should be a zip archive with audio files in the top-level folder. Supported audio formats:

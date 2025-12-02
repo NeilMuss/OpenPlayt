@@ -9,9 +9,11 @@ how the script is run.
 import os
 import sys
 
-# Add the 'software' directory to the Python path
+# Add the 'python-player' directory to the Python path
 # This allows the 'playt_player' package to be imported
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+python_player_dir = os.path.join(script_dir, "python-player")
+sys.path.insert(0, python_player_dir)
 
 from playt_player.interface.cli.player_cli import main
 
